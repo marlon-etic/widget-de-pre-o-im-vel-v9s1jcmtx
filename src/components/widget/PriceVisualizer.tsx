@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Info } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 interface PriceVisualizerProps {
   min: number
@@ -37,13 +38,27 @@ export function PriceVisualizer({ min, max, estimate }: PriceVisualizerProps) {
         {/* Dynamic Marker */}
         <div
           className="absolute -top-[42px] flex flex-col items-center transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-10"
-          style={{ left: `${markerPos}%` }}
+          style={{ left: `${markerPos}%`, transform: 'translateX(-50%)' }}
         >
-          <div className="bg-slate-900 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-lg whitespace-nowrap mb-1 animate-float">
+          <div
+            className={cn(
+              'text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-lg whitespace-nowrap mb-1 animate-float transition-colors duration-1000',
+              markerPos < 33.3 ? 'bg-green-600' : markerPos < 66.6 ? 'bg-yellow-500' : 'bg-red-600',
+            )}
+          >
             {formatCurrency(estimate)}
           </div>
           {/* Arrow Point */}
-          <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[7px] border-l-transparent border-r-transparent border-t-slate-900 relative -top-[5px]" />
+          <div
+            className={cn(
+              'w-0 h-0 border-l-[6px] border-r-[6px] border-t-[7px] border-l-transparent border-r-transparent relative -top-[5px] transition-colors duration-1000',
+              markerPos < 33.3
+                ? 'border-t-green-600'
+                : markerPos < 66.6
+                  ? 'border-t-yellow-500'
+                  : 'border-t-red-600',
+            )}
+          />
         </div>
 
         {/* 3-Segment Bar */}
@@ -55,15 +70,24 @@ export function PriceVisualizer({ min, max, estimate }: PriceVisualizerProps) {
           aria-valuenow={estimate}
         >
           <div
-            className="w-1/3 bg-green-500 transition-colors hover:brightness-110"
+            className={cn(
+              'w-1/3 transition-colors hover:brightness-110',
+              markerPos < 33.3 ? 'bg-green-500' : 'bg-green-500/40',
+            )}
             title="Abaixo do mercado"
           />
           <div
-            className="w-1/3 bg-yellow-400 transition-colors hover:brightness-110"
+            className={cn(
+              'w-1/3 transition-colors hover:brightness-110',
+              markerPos >= 33.3 && markerPos < 66.6 ? 'bg-yellow-400' : 'bg-yellow-400/40',
+            )}
             title="Média do mercado"
           />
           <div
-            className="w-1/3 bg-red-500 transition-colors hover:brightness-110"
+            className={cn(
+              'w-1/3 transition-colors hover:brightness-110',
+              markerPos >= 66.6 ? 'bg-red-500' : 'bg-red-500/40',
+            )}
             title="Acima do mercado"
           />
         </div>
