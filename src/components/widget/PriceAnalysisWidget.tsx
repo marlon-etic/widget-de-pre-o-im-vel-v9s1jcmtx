@@ -235,7 +235,7 @@ export function PriceAnalysisWidget({
               </p>
               <Link to="/login" className="w-full">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 text-[15px] shadow-md transition-all">
-                  Acessar análise completa
+                  Deixar meus dados para acessar
                 </Button>
               </Link>
             </div>
@@ -246,7 +246,7 @@ export function PriceAnalysisWidget({
           className={cn(
             'transition-all duration-700 h-full flex flex-col',
             viewIndex === 0 ? 'opacity-100 animate-fade-in flex' : 'hidden',
-            !isUnlocked && 'blur-[8px] opacity-30 select-none pointer-events-none scale-[0.98]',
+            !isUnlocked && 'blur-md opacity-30 select-none pointer-events-none scale-[0.98]',
           )}
           aria-hidden={!isUnlocked}
         >
@@ -272,8 +272,8 @@ export function PriceAnalysisWidget({
                     currentPrice={propertyData.currentPrice}
                   />
                   <ComparisonSection
-                    condo={750}
-                    iptu={84}
+                    condo={condo || 750}
+                    iptu={iptu || 84}
                     condoAvg={condoAvg}
                     iptuAvg={iptuAvg}
                     recordsTotal={d.records_total}
@@ -289,7 +289,7 @@ export function PriceAnalysisWidget({
           className={cn(
             'transition-opacity duration-500 h-full flex flex-col items-center justify-center text-center',
             viewIndex === 1 ? 'opacity-100 animate-fade-in flex' : 'hidden',
-            !isUnlocked && 'blur-[8px] opacity-30 select-none pointer-events-none scale-[0.98]',
+            !isUnlocked && 'blur-md opacity-30 select-none pointer-events-none scale-[0.98]',
           )}
           aria-hidden={!isUnlocked}
         >

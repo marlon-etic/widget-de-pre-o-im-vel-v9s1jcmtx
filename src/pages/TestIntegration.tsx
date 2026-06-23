@@ -10,8 +10,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Copy, ExternalLink, Check, Code2 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
+import { Navigate } from 'react-router-dom'
 
 export default function TestIntegration() {
+  const { isAuthenticated, loading } = useAuth()
   const [formData, setFormData] = useState({
     estado: 'SP',
     cidade: 'São Paulo',
@@ -78,6 +81,9 @@ export default function TestIntegration() {
   const handleSelectChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value })
   }
+
+  if (loading) return <div className="p-12 text-center text-slate-500">Carregando...</div>
+  if (!isAuthenticated) return <Navigate to="/login" />
 
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">

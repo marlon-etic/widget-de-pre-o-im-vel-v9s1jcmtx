@@ -4,10 +4,19 @@ import { PriceAnalysisWidget } from '@/components/widget/PriceAnalysisWidget'
 export default function Widget() {
   const [searchParams] = useSearchParams()
 
-  const propertyType = searchParams.get('tipo') || 'apartamento'
-  const state = searchParams.get('estado') || 'sp'
-  const city = searchParams.get('cidade') || 'sao-paulo'
-  const neighborhood = searchParams.get('bairro') || 'tatuape'
+  const sanitize = (str: string | null) => {
+    if (!str) return ''
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+  }
+
+  const propertyType = sanitize(searchParams.get('tipo')) || 'apartamento'
+  const state = sanitize(searchParams.get('estado')) || 'sp'
+  const city = sanitize(searchParams.get('cidade')) || 'sao-paulo'
+  const neighborhood = sanitize(searchParams.get('bairro')) || 'tatuape'
   const area = Number(searchParams.get('area')) || 70
   const rooms = Number(searchParams.get('quartos')) || 2
   const suites = Number(searchParams.get('suites')) || 1
