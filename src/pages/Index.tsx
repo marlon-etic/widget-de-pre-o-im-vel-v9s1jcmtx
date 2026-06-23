@@ -2,11 +2,31 @@ import { PriceAnalysisWidget } from '@/components/widget/PriceAnalysisWidget'
 import { MapPin, Bed, Bath, Square, Car, Share, Heart, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 
 export default function Index() {
   const { user, signOut } = useAuth()
+  const [searchParams] = useSearchParams()
+
+  const propertyType = searchParams.get('tipo') || 'Apartamento'
+  const state = searchParams.get('estado') || 'SP'
+  const city = searchParams.get('cidade') || 'São Paulo'
+  const neighborhood = searchParams.get('bairro') || 'Tatuapé'
+  const area = Number(searchParams.get('area')) || 70
+  const rooms = Number(searchParams.get('quartos')) || 2
+  const suites = Number(searchParams.get('suites')) || 1
+  const bathrooms = Number(searchParams.get('banheiros')) || 1
+  const parkingSpots = Number(searchParams.get('vagas')) || 1
+  const currentPrice = Number(searchParams.get('preco')) || 650000
+  const businessType = Number(searchParams.get('negocio')) || 1
+  const condo = Number(searchParams.get('condominio')) || 750
+  const iptu = Number(searchParams.get('iptu')) || 84
+  const url_imovel = searchParams.get('url_imovel') || window.location.pathname
+
+  const formatDisplay = (str: string) =>
+    str.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
       {/* Mock Header Navigation */}
@@ -23,6 +43,9 @@ export default function Index() {
             <a href="#" className="hover:text-primary">
               Lançamentos
             </a>
+            <Link to="/teste-integracao" className="hover:text-primary font-bold text-blue-600">
+              Testar Integração
+            </Link>
           </nav>
           <div className="flex gap-2 items-center">
             {user ? (
@@ -88,24 +111,26 @@ export default function Index() {
           <div>
             <div className="flex items-center text-sm font-medium text-slate-500 mb-2">
               <MapPin size={16} className="mr-1.5" />
-              Tatuapé, São Paulo - SP
+              {formatDisplay(neighborhood)}, {formatDisplay(city)} -{' '}
+              {formatDisplay(state).toUpperCase()}
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mb-4">
-              Apartamento moderno com varanda gourmet no Tatuapé
+              {formatDisplay(propertyType)} moderno com varanda gourmet no{' '}
+              {formatDisplay(neighborhood)}
             </h1>
 
             <div className="flex flex-wrap items-center gap-4 py-4 border-y border-slate-200 mt-6">
               <div className="flex items-center text-slate-700 font-medium">
-                <Square size={20} className="mr-2 text-slate-400" /> 70m² úteis
+                <Square size={20} className="mr-2 text-slate-400" /> {area}m² úteis
               </div>
               <div className="flex items-center text-slate-700 font-medium">
-                <Bed size={20} className="mr-2 text-slate-400" /> 2 Quartos
+                <Bed size={20} className="mr-2 text-slate-400" /> {rooms} Quartos
               </div>
               <div className="flex items-center text-slate-700 font-medium">
-                <Bath size={20} className="mr-2 text-slate-400" /> 1 Suíte
+                <Bath size={20} className="mr-2 text-slate-400" /> {suites} Suíte
               </div>
               <div className="flex items-center text-slate-700 font-medium">
-                <Car size={20} className="mr-2 text-slate-400" /> 1 Vaga
+                <Car size={20} className="mr-2 text-slate-400" /> {parkingSpots} Vaga
               </div>
             </div>
           </div>
@@ -129,7 +154,11 @@ export default function Index() {
               <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Preço do Imóvel
               </p>
-              <h2 className="text-4xl font-black text-slate-900 mb-4">R$ 650.000</h2>
+              <h2 className="text-4xl font-black text-slate-900 mb-4">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                  currentPrice,
+                )}
+              </h2>
               <Button className="w-full h-12 text-md font-bold rounded-xl shadow-md">
                 Falar com o corretor
               </Button>
@@ -137,20 +166,20 @@ export default function Index() {
 
             {/* The Target Component */}
             <PriceAnalysisWidget
-              propertyType="Apartamento"
-              state="SP"
-              city="São Paulo"
-              neighborhood="Tatuapé"
-              area={70}
-              rooms={2}
-              suites={1}
-              bathrooms={1}
-              parkingSpots={1}
-              currentPrice={650000}
-              businessType={1}
-              condo={750}
-              iptu={84}
-              url={window.location.pathname}
+              propertyType={propertyType}
+              state={state}
+              city={city}
+              neighborhood={neighborhood}
+              area={area}
+              rooms={rooms}
+              suites={suites}
+              bathrooms={bathrooms}
+              parkingSpots={parkingSpots}
+              currentPrice={currentPrice}
+              businessType={businessType}
+              condo={condo}
+              iptu={iptu}
+              url={url_imovel}
             />
           </div>
         </div>

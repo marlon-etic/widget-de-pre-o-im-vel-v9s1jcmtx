@@ -26,24 +26,37 @@ export interface PriceAnalysisWidgetProps {
   url?: string
 }
 
+const sanitizeForLookup = (str: string) =>
+  str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+
 const propertyTypeMap: Record<string, number> = {
   apartamento: 1,
   studio: 2,
   loft: 15,
   casa: 3,
   sobrado: 16,
-  'casa em condomínio': 4,
+  'casa-em-condominio': 4,
   sala: 5,
-  prédio: 6,
+  predio: 6,
   terreno: 8,
-  chácara: 9,
+  chacara: 9,
   fazenda: 10,
   loja: 11,
-  'depósito/pavilhão': 12,
-  depósito: 12,
-  pavilhão: 12,
-  'vaga de estacionamento': 13,
+  'deposito-pavilhao': 12,
+  deposito: 12,
+  pavilhao: 12,
+  'vaga-de-estacionamento': 13,
+  vaga: 13,
   andar: 14,
+}
+
+const formatDisplay = (str: string) => {
+  if (!str) return ''
+  return str.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 export function PriceAnalysisWidget({
@@ -75,8 +88,8 @@ export function PriceAnalysisWidget({
       setIsLoading(true)
       setErrorMsg('')
 
-      const tipoId = propertyTypeMap[propertyType.toLowerCase()] || 1
-      const location = `${state} > ${city} > ${neighborhood}`
+      const tipoId = propertyTypeMap[sanitizeForLookup(propertyType)] || 1
+      const location = `${formatDisplay(state)} > ${formatDisplay(city)} > ${formatDisplay(neighborhood)}`
       const unit_price = currentPrice / area
 
       fetchNivuAnalysis({
@@ -164,7 +177,7 @@ export function PriceAnalysisWidget({
   const iptuAvg = d.unit_price * area * 0.0001
 
   const propertyData = {
-    location: `${city}, ${neighborhood}`,
+    location: `${formatDisplay(city)}, ${formatDisplay(neighborhood)}`,
     specs: `${area}m² • ${rooms} quartos • ${suites} suíte • ${bathrooms} banheiro • ${parkingSpots} vaga`,
     currentPrice,
   }

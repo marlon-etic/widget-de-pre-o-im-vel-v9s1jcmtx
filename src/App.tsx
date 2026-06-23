@@ -8,6 +8,8 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Recovery from './pages/Recovery'
+import Widget from './pages/Widget'
+import TestIntegration from './pages/TestIntegration'
 import { AuthProvider } from './hooks/use-auth'
 
 const App = () => (
@@ -22,7 +24,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/recovery" element={<Recovery />} />
+            <Route path="/teste-integracao" element={<TestIntegration />} />
           </Route>
+          <Route path="/widget" element={<Widget />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>
