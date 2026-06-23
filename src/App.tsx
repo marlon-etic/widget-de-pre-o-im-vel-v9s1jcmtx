@@ -8,29 +8,25 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Recovery from './pages/Recovery'
-import { AuthProvider } from './stores/useAuthStore'
-import { DataProvider } from './stores/useDataStore'
+import { AuthProvider } from './hooks/use-auth'
 
 const App = () => (
   <AuthProvider>
-    <DataProvider>
-      <BrowserRouter>
-        <TooltipProvider delayDuration={300}>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/recovery" element={<Recovery />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </BrowserRouter>
-    </DataProvider>
+    <BrowserRouter>
+      <TooltipProvider delayDuration={300}>
+        <Toaster />
+        <Sonner />
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/recovery" element={<Recovery />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </TooltipProvider>
+    </BrowserRouter>
   </AuthProvider>
 )
-
 export default App

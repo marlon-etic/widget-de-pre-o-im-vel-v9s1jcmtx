@@ -3,10 +3,10 @@ import { MapPin, Bed, Bath, Square, Car, Share, Heart, LogOut } from 'lucide-rea
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Link } from 'react-router-dom'
-import useAuthStore from '@/stores/useAuthStore'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function Index() {
-  const { user, logout } = useAuthStore()
+  const { user, signOut } = useAuth()
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
       {/* Mock Header Navigation */}
@@ -28,12 +28,12 @@ export default function Index() {
             {user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-slate-600 hidden sm:inline-block">
-                  Olá, {user.nome_completo.split(' ')[0]}
+                  Olá, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuário'}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={logout}
+                  onClick={signOut}
                   title="Sair"
                   className="text-slate-500 hover:text-red-600"
                 >

@@ -1,42 +1,105 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, MapPin, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin, Lock, AlertCircle } from 'lucide-react'
 import { PriceVisualizer } from './PriceVisualizer'
 import { ComparisonSection } from './ComparisonSection'
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
-import useAuthStore from '@/stores/useAuthStore'
-import useDataStore from '@/stores/useDataStore'
+import { useAuth } from '@/hooks/use-auth'
+import { fetchNivuAnalysis, createAnalise } from '@/services/analises'
 
 export function PriceAnalysisWidget() {
   const [viewIndex, setViewIndex] = useState(0)
-  const { user } = useAuthStore()
-  const { getAnalise } = useDataStore()
+  const { user, isAuthenticated } = useAuth()
+  const [analysisData, setAnalysisData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
-  const isUnlocked = !!user
+  const isUnlocked = isAuthenticated
 
-  // Get data from mock store or fallback
-  const analise = getAnalise('prop-1')
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setIsLoading(true)
+      fetchNivuAnalysis({
+        location: 'SP > São Paulo > Tatuapé',
+        property_type: 1,
+        business_type: 1,
+        area: 70,
+        area_margin: 0.5,
+        unit_price: 650000 / 70,
+        unit_price_margin: 0.5,
+        rooms: 2,
+        suites: 1,
+        bathrooms: 1,
+        parking_spots: 1,
+      })
+        .then((data) => {
+          setAnalysisData(data)
+          createAnalise({
+            usuario_id: user.id,
+            url_imovel: window.location.pathname,
+            preco_imovel: 650000,
+            area: 70,
+            quartos: 2,
+            suites: 1,
+            banheiros: 1,
+            vagas: 1,
+            tipo: 1,
+            bairro: 'Tatuapé',
+            cidade: 'São Paulo',
+            estado: 'SP',
+            preco_inferido: data.inference || data.price,
+            faixa_minima: data.price_lower_iqr,
+            faixa_maxima: data.price_upper_iqr,
+            preco_medio: data.price,
+            preco_unitario: data.unit_price,
+            liquidez: String(data.score_fit),
+            registros_usados: data.records_total,
+            condominio_atual: 750,
+            condominio_media: data.unit_price * 70 * 0.001,
+            iptu_atual: 84,
+            iptu_media: data.unit_price * 70 * 0.0001,
+            data_analise: new Date().toISOString(),
+          }).catch(console.error)
+        })
+        .catch(() => {
+          setErrorMsg('Não foi possível calcular a precificação no momento')
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }
+  }, [isAuthenticated, user])
 
-  const propertyData = {
-    location: `${analise?.cidade || 'São Paulo'}, ${analise?.bairro || 'Tatuapé'}`,
-    specs: `${analise?.area || 70}m² • ${analise?.quartos || 2} quartos • ${analise?.suites || 1} suíte • ${analise?.banheiros || 1} banheiro • ${analise?.vagas || 1} vaga`,
-    currentPrice: analise?.preco_imovel || 650000,
-    estimate: analise?.preco_inferido || 726000,
-    min: analise?.faixa_minima || 550000,
-    max: analise?.faixa_maxima || 920000,
-    condo: analise?.condominio_atual || 750,
-    iptu: analise?.iptu_atual || 84,
+  const mockFallback = {
+    inference: 726000,
+    price_lower_iqr: 550000,
+    price_upper_iqr: 920000,
+    price_q1: 620000,
+    price_q3: 820000,
+    price: 700000,
+    unit_price: 10000,
+    score_fit: 'Alta',
+    records_total: 1250,
   }
 
-  // Schema.org structured data for SEO
+  const d = analysisData || mockFallback
+  const condoAvg = d.unit_price * 70 * 0.001
+  const iptuAvg = d.unit_price * 70 * 0.0001
+
+  const propertyData = {
+    location: 'São Paulo, Tatuapé',
+    specs: '70m² • 2 quartos • 1 suíte • 1 banheiro • 1 vaga',
+    currentPrice: 650000,
+  }
+
   const schemaData = {
     '@context': 'https://schema.org',
     '@type': 'PriceSpecification',
     price: propertyData.currentPrice,
     priceCurrency: 'BRL',
-    description: `Estimativa de mercado: R$ ${propertyData.estimate}`,
+    description: `Estimativa de mercado: R$ ${d.inference}`,
   }
 
   return (
@@ -44,17 +107,15 @@ export function PriceAnalysisWidget() {
       aria-label="Widget de Análise de Preço de Imóvel"
       className="w-full max-w-[500px] bg-white rounded-2xl shadow-xl border border-slate-200/60 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl relative"
     >
-      {/* Hidden JSON-LD block for SEO crawlers */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
 
-      {/* Widget Header */}
       <header className="p-6 pb-5 border-b border-slate-100 flex flex-col gap-3.5 bg-white relative z-20">
         <div className="flex items-center justify-between">
           <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-0 font-bold tracking-wider px-2.5 py-0.5 text-[10px]">
-            GRATUITO
+            MARKET INSIGHTS
           </Badge>
           <div className="flex items-center text-[11px] text-slate-500 font-semibold bg-slate-50 border border-slate-100 px-2 py-1 rounded-md">
             <MapPin size={12} className="mr-1 text-slate-400" />
@@ -71,9 +132,7 @@ export function PriceAnalysisWidget() {
         </p>
       </header>
 
-      {/* Dynamic Content Area */}
-      <div className="p-6 flex-1 min-h-[340px] bg-white relative overflow-hidden flex flex-col">
-        {/* Auth Overlay */}
+      <div className="p-6 flex-1 min-h-[380px] bg-white relative overflow-hidden flex flex-col">
         {!isUnlocked && (
           <div className="absolute inset-0 z-30 bg-slate-900/10 flex flex-col items-center justify-center p-6">
             <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center text-center max-w-[90%] transform transition-transform hover:scale-105">
@@ -105,22 +164,39 @@ export function PriceAnalysisWidget() {
         >
           {viewIndex === 0 && (
             <>
-              <PriceVisualizer
-                min={propertyData.min}
-                max={propertyData.max}
-                estimate={propertyData.estimate}
-              />
-              <ComparisonSection
-                condo={propertyData.condo}
-                iptu={propertyData.iptu}
-                condoAvg={analise?.condominio_media || 800}
-                iptuAvg={analise?.iptu_media || 100}
-              />
+              {errorMsg && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+                  <AlertCircle size={16} />
+                  {errorMsg}
+                </div>
+              )}
+              {isLoading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+                </div>
+              ) : (
+                <>
+                  <PriceVisualizer
+                    min={d.price_lower_iqr}
+                    max={d.price_upper_iqr}
+                    q1={d.price_q1}
+                    q3={d.price_q3}
+                    currentPrice={propertyData.currentPrice}
+                  />
+                  <ComparisonSection
+                    condo={750}
+                    iptu={84}
+                    condoAvg={condoAvg}
+                    iptuAvg={iptuAvg}
+                    recordsTotal={d.records_total}
+                    scoreFit={d.score_fit}
+                  />
+                </>
+              )}
             </>
           )}
         </div>
 
-        {/* Placeholder for secondary view to demonstrate slider functionality */}
         <div
           className={cn(
             'transition-opacity duration-500 h-full flex flex-col items-center justify-center text-center',
@@ -143,7 +219,6 @@ export function PriceAnalysisWidget() {
         </div>
       </div>
 
-      {/* Widget Footer / Controls */}
       <footer className="bg-slate-50 p-3.5 px-6 flex justify-end items-center border-t border-slate-100 space-x-2 relative z-20">
         <Button
           variant="outline"

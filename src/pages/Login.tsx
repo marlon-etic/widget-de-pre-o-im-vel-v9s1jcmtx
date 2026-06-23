@@ -4,18 +4,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import useAuthStore from '@/stores/useAuthStore'
+import { useAuth } from '@/hooks/use-auth'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const { login } = useAuthStore()
+  const { signIn } = useAuth()
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (login(email, senha)) {
+    setLoading(true)
+    const { error } = await signIn(email, senha)
+    setLoading(false)
+    if (!error) {
       navigate('/')
+    } else {
+      toast({ title: 'Credenciais inválidas', variant: 'destructive' })
     }
   }
 

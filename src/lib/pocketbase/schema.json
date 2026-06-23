@@ -1,0 +1,221 @@
+{
+  "generatedAt": "2026-06-23T20:57:48.963Z",
+  "collections": [
+    {
+      "name": "users",
+      "type": "auth",
+      "apiRules": {
+        "list": "id = @request.auth.id",
+        "view": "id = @request.auth.id",
+        "create": "",
+        "update": "id = @request.auth.id",
+        "delete": "id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "avatar",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
+        "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "analises_imoveis",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && usuario_id = @request.auth.id",
+        "view": "@request.auth.id != '' && usuario_id = @request.auth.id",
+        "create": "@request.auth.id != '' && usuario_id = @request.auth.id",
+        "update": "@request.auth.id != '' && usuario_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && usuario_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "usuario_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "url_imovel",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "preco_imovel",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "area",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "quartos",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "suites",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "banheiros",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "vagas",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tipo",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "bairro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cidade",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "preco_inferido",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "faixa_minima",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "faixa_maxima",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "preco_medio",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "preco_unitario",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "liquidez",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "registros_usados",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "condominio_atual",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "condominio_media",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "iptu_atual",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "iptu_media",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_analise",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    }
+  ]
+}

@@ -4,19 +4,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import useAuthStore from '@/stores/useAuthStore'
+import { useAuth } from '@/hooks/use-auth'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function Register() {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const { register } = useAuthStore()
+  const { signUp } = useAuth()
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (register(nome, email, senha)) {
-      navigate('/login')
+    setLoading(true)
+    const { error } = await signUp(email, senha, nome)
+    setLoading(false)
+    if (!error) {
+      toast({ title: 'Conta criada com sucesso!' })
+      navigate('/')
+    } else {
+      toast({ title: 'Erro ao criar conta', variant: 'destructive' })
     }
   }
 

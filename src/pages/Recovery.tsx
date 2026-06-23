@@ -5,18 +5,27 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/use-toast'
+import pb from '@/lib/pocketbase/client'
 
 export default function Recovery() {
   const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast({
-      title: 'E-mail enviado',
-      description:
-        'Se o e-mail existir em nossa base, você receberá um link para redefinir sua senha.',
-    })
-    setEmail('')
+    setLoading(true)
+    try {
+      await pb.collection('users').requestPasswordReset(email)
+      toast({
+        title: 'E-mail enviado',
+        description:
+          'Se o e-mail existir em nossa base, você receberá um link para redefinir sua senha.',
+      })
+      setEmail('')
+    } catch (error) {
+      toast({ title: 'Ocorreu um erro', variant: 'destructive' })
+    }
+    setLoading(false)
   }
 
   return (
