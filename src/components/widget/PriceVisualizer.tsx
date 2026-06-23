@@ -94,9 +94,15 @@ export function PriceVisualizer({ min, max, estimate }: PriceVisualizerProps) {
       </div>
 
       {/* Min / Max Labels */}
-      <div className="flex justify-between items-center text-xs font-bold text-slate-600 mb-4 px-1">
-        <span>{formatCurrency(min)}</span>
-        <span>{formatCurrency(max)}</span>
+      <div className="flex justify-between items-center text-xs text-slate-600 mb-4 px-1">
+        <div className="flex flex-col items-start">
+          <span className="text-[10px] uppercase font-semibold text-slate-400">Valor mínimo</span>
+          <span className="font-bold text-slate-700">{formatCurrency(min)}</span>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] uppercase font-semibold text-slate-400">Valor máximo</span>
+          <span className="font-bold text-slate-700">{formatCurrency(max)}</span>
+        </div>
       </div>
 
       {/* Info Tooltip */}

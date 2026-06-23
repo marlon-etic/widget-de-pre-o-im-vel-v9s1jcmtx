@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge'
 interface ComparisonSectionProps {
   condo: number
   iptu: number
+  condoAvg?: number
+  iptuAvg?: number
 }
 
-export function ComparisonSection({ condo, iptu }: ComparisonSectionProps) {
+export function ComparisonSection({ condo, iptu, condoAvg, iptuAvg }: ComparisonSectionProps) {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -34,12 +36,14 @@ export function ComparisonSection({ condo, iptu }: ComparisonSectionProps) {
               <p className="text-xl font-extrabold text-slate-900 tracking-tight">
                 {formatCurrency(condo)}
               </p>
-              <Badge
-                variant="secondary"
-                className="mt-1 text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
-              >
-                Média da região
-              </Badge>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
+                >
+                  Média: {condoAvg ? formatCurrency(condoAvg) : 'R$ 800'}
+                </Badge>
+              </div>
               <a
                 href="#condo"
                 className="block mt-3 text-xs text-blue-600 hover:underline font-semibold"
@@ -65,12 +69,14 @@ export function ComparisonSection({ condo, iptu }: ComparisonSectionProps) {
               <p className="text-xl font-extrabold text-slate-900 tracking-tight">
                 {formatCurrency(iptu)}
               </p>
-              <Badge
-                variant="secondary"
-                className="mt-1 text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
-              >
-                Média da região
-              </Badge>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
+                >
+                  Média: {iptuAvg ? formatCurrency(iptuAvg) : 'R$ 100'}
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>

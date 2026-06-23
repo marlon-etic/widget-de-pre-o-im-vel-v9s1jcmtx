@@ -1,27 +1,33 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin, Lock } from 'lucide-react'
 import { PriceVisualizer } from './PriceVisualizer'
 import { ComparisonSection } from './ComparisonSection'
 import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
+import { Link } from 'react-router-dom'
+import useAuthStore from '@/stores/useAuthStore'
+import useDataStore from '@/stores/useDataStore'
 
 export function PriceAnalysisWidget() {
   const [viewIndex, setViewIndex] = useState(0)
-  const [isUnlocked, setIsUnlocked] = useState(false)
-  const [showLeadCapture, setShowLeadCapture] = useState(false)
+  const { user } = useAuthStore()
+  const { getAnalise } = useDataStore()
 
-  // Hardcoded sample data per specification
+  const isUnlocked = !!user
+
+  // Get data from mock store or fallback
+  const analise = getAnalise('prop-1')
+
   const propertyData = {
-    location: 'São Paulo, Tatuapé',
-    specs: '70m² • 2 quartos • 1 suíte • 1 banheiro • 1 vaga',
-    currentPrice: 650000,
-    estimate: 726000,
-    min: 550000,
-    max: 920000,
-    condo: 750,
-    iptu: 84,
+    location: `${analise?.cidade || 'São Paulo'}, ${analise?.bairro || 'Tatuapé'}`,
+    specs: `${analise?.area || 70}m² • ${analise?.quartos || 2} quartos • ${analise?.suites || 1} suíte • ${analise?.banheiros || 1} banheiro • ${analise?.vagas || 1} vaga`,
+    currentPrice: analise?.preco_imovel || 650000,
+    estimate: analise?.preco_inferido || 726000,
+    min: analise?.faixa_minima || 550000,
+    max: analise?.faixa_maxima || 920000,
+    condo: analise?.condominio_atual || 750,
+    iptu: analise?.iptu_atual || 84,
   }
 
   // Schema.org structured data for SEO
@@ -31,12 +37,6 @@ export function PriceAnalysisWidget() {
     price: propertyData.currentPrice,
     priceCurrency: 'BRL',
     description: `Estimativa de mercado: R$ ${propertyData.estimate}`,
-  }
-
-  const handleLeadSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setShowLeadCapture(false)
-    setIsUnlocked(true)
   }
 
   return (
@@ -49,36 +49,6 @@ export function PriceAnalysisWidget() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
-
-      {/* Lead Capture Overlay */}
-      {showLeadCapture && (
-        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-fade-in">
-          <div className="w-full bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 relative">
-            <button
-              onClick={() => setShowLeadCapture(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X size={20} />
-            </button>
-            <h4 className="text-xl font-extrabold text-slate-900 mb-2">Libere sua análise</h4>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Preencha os dados abaixo para acessar os valores completos do imóvel e comparativos da
-              região.
-            </p>
-            <form onSubmit={handleLeadSubmit} className="space-y-3.5">
-              <Input type="text" placeholder="Nome completo" required className="h-11" />
-              <Input type="email" placeholder="E-mail" required className="h-11" />
-              <Input type="tel" placeholder="Telefone" required className="h-11" />
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 mt-2 text-[15px]"
-              >
-                Ver análise grátis
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Widget Header */}
       <header className="p-6 pb-5 border-b border-slate-100 flex flex-col gap-3.5 bg-white relative z-20">
@@ -95,30 +65,43 @@ export function PriceAnalysisWidget() {
           Entenda se é um bom negócio com a análise de preço
         </h3>
 
-        {!isUnlocked && (
-          <div className="mt-1 flex flex-col gap-4 animate-fade-in">
-            <p className="text-[14px] text-slate-600 font-medium leading-relaxed">
-              Tenha acesso a informações exclusivas sobre o mercado imobiliário para tomar a melhor
-              decisão.
-            </p>
-            <Button
-              onClick={() => setShowLeadCapture(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 text-[15px] shadow-md hover:shadow-lg transition-all"
-            >
-              Acessar análise completa
-            </Button>
-          </div>
-        )}
+        <p className="text-[14px] text-slate-600 font-medium leading-relaxed mt-1">
+          Tenha acesso a informações exclusivas sobre o mercado imobiliário para tomar a melhor
+          decisão.
+        </p>
       </header>
 
       {/* Dynamic Content Area */}
-      <div className="p-6 flex-1 min-h-[340px] bg-white relative overflow-hidden">
+      <div className="p-6 flex-1 min-h-[340px] bg-white relative overflow-hidden flex flex-col">
+        {/* Auth Overlay */}
+        {!isUnlocked && (
+          <div className="absolute inset-0 z-30 bg-slate-900/10 flex flex-col items-center justify-center p-6">
+            <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center text-center max-w-[90%] transform transition-transform hover:scale-105">
+              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-600">
+                <Lock size={24} />
+              </div>
+              <h4 className="text-[17px] font-bold text-slate-900 mb-2 leading-tight">
+                Faça login para ver a análise completa
+              </h4>
+              <p className="text-sm text-slate-500 mb-5">
+                Desbloqueie dados exclusivos sobre o valor deste imóvel.
+              </p>
+              <Link to="/login" className="w-full">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 text-[15px] shadow-md transition-all">
+                  Acessar análise completa
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div
           className={cn(
-            'transition-all duration-700 h-full',
-            viewIndex === 0 ? 'opacity-100 animate-fade-in block' : 'hidden',
-            !isUnlocked && 'blur-[6px] opacity-40 select-none pointer-events-none scale-[0.98]',
+            'transition-all duration-700 h-full flex flex-col',
+            viewIndex === 0 ? 'opacity-100 animate-fade-in flex' : 'hidden',
+            !isUnlocked && 'blur-[8px] opacity-30 select-none pointer-events-none scale-[0.98]',
           )}
+          aria-hidden={!isUnlocked}
         >
           {viewIndex === 0 && (
             <>
@@ -127,7 +110,12 @@ export function PriceAnalysisWidget() {
                 max={propertyData.max}
                 estimate={propertyData.estimate}
               />
-              <ComparisonSection condo={propertyData.condo} iptu={propertyData.iptu} />
+              <ComparisonSection
+                condo={propertyData.condo}
+                iptu={propertyData.iptu}
+                condoAvg={analise?.condominio_media || 800}
+                iptuAvg={analise?.iptu_media || 100}
+              />
             </>
           )}
         </div>
@@ -137,8 +125,9 @@ export function PriceAnalysisWidget() {
           className={cn(
             'transition-opacity duration-500 h-full flex flex-col items-center justify-center text-center',
             viewIndex === 1 ? 'opacity-100 animate-fade-in flex' : 'hidden',
-            !isUnlocked && 'blur-[6px] opacity-40 select-none pointer-events-none scale-[0.98]',
+            !isUnlocked && 'blur-[8px] opacity-30 select-none pointer-events-none scale-[0.98]',
           )}
+          aria-hidden={!isUnlocked}
         >
           {viewIndex === 1 && (
             <div className="p-6">
