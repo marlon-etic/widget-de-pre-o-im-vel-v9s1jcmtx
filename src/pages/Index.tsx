@@ -136,7 +136,22 @@ export default function Index() {
             </div>
 
             {/* The Target Component */}
-            <PriceAnalysisWidget />
+            <PriceAnalysisWidget
+              propertyType="Apartamento"
+              state="SP"
+              city="São Paulo"
+              neighborhood="Tatuapé"
+              area={70}
+              rooms={2}
+              suites={1}
+              bathrooms={1}
+              parkingSpots={1}
+              currentPrice={650000}
+              businessType={1}
+              condo={750}
+              iptu={84}
+              url={window.location.pathname}
+            />
           </div>
         </div>
       </main>

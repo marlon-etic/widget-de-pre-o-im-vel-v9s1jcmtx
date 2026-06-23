@@ -34,7 +34,7 @@ export function ComparisonSection({
           <CardContent className="p-3.5 flex flex-col items-center justify-center text-center">
             <Database size={16} className="text-blue-500 mb-1" />
             <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight mb-0.5">
-              Comparáveis
+              Registros usados
             </h4>
             <p className="text-lg font-black text-slate-900 leading-none">{recordsTotal || '-'}</p>
           </CardContent>

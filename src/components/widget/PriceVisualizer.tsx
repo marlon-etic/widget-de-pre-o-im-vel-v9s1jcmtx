@@ -76,17 +76,17 @@ export function PriceVisualizer({ min, max, q1, q3, currentPrice }: PriceVisuali
           <div
             className="bg-green-500 transition-all hover:brightness-110 h-full"
             style={{ width: `${q1Pct}%` }}
-            title="Abaixo do mercado (1º Quartil)"
+            title="Abaixo do mercado (até Q1)"
           />
           <div
             className="bg-yellow-400 transition-all hover:brightness-110 h-full"
             style={{ width: `${q3Pct - q1Pct}%` }}
-            title="Média do mercado (IQR)"
+            title="Média do mercado (Q1 até Q3)"
           />
           <div
             className="bg-red-500 transition-all hover:brightness-110 h-full"
             style={{ width: `${100 - q3Pct}%` }}
-            title="Acima do mercado (3º Quartil)"
+            title="Acima do mercado (após Q3)"
           />
         </div>
       </div>

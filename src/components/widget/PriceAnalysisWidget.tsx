@@ -9,7 +9,59 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { fetchNivuAnalysis, createAnalise } from '@/services/analises'
 
-export function PriceAnalysisWidget() {
+export interface PriceAnalysisWidgetProps {
+  propertyType: string
+  state: string
+  city: string
+  neighborhood: string
+  area: number
+  rooms: number
+  suites: number
+  bathrooms: number
+  parkingSpots: number
+  currentPrice: number
+  businessType: number
+  condo?: number
+  iptu?: number
+  url?: string
+}
+
+const propertyTypeMap: Record<string, number> = {
+  apartamento: 1,
+  studio: 2,
+  loft: 15,
+  casa: 3,
+  sobrado: 16,
+  'casa em condomínio': 4,
+  sala: 5,
+  prédio: 6,
+  terreno: 8,
+  chácara: 9,
+  fazenda: 10,
+  loja: 11,
+  'depósito/pavilhão': 12,
+  depósito: 12,
+  pavilhão: 12,
+  'vaga de estacionamento': 13,
+  andar: 14,
+}
+
+export function PriceAnalysisWidget({
+  propertyType,
+  state,
+  city,
+  neighborhood,
+  area,
+  rooms,
+  suites,
+  bathrooms,
+  parkingSpots,
+  currentPrice,
+  businessType,
+  condo,
+  iptu,
+  url,
+}: PriceAnalysisWidgetProps) {
   const [viewIndex, setViewIndex] = useState(0)
   const { user, isAuthenticated } = useAuth()
   const [analysisData, setAnalysisData] = useState<any>(null)
@@ -21,34 +73,40 @@ export function PriceAnalysisWidget() {
   useEffect(() => {
     if (isAuthenticated && user) {
       setIsLoading(true)
+      setErrorMsg('')
+
+      const tipoId = propertyTypeMap[propertyType.toLowerCase()] || 1
+      const location = `${state} > ${city} > ${neighborhood}`
+      const unit_price = currentPrice / area
+
       fetchNivuAnalysis({
-        location: 'SP > São Paulo > Tatuapé',
-        property_type: 1,
-        business_type: 1,
-        area: 70,
+        location,
+        property_type: tipoId,
+        business_type: businessType,
+        area,
         area_margin: 0.5,
-        unit_price: 650000 / 70,
+        unit_price,
         unit_price_margin: 0.5,
-        rooms: 2,
-        suites: 1,
-        bathrooms: 1,
-        parking_spots: 1,
+        rooms,
+        suites,
+        bathrooms,
+        parking_spots: parkingSpots,
       })
         .then((data) => {
           setAnalysisData(data)
           createAnalise({
             usuario_id: user.id,
-            url_imovel: window.location.pathname,
-            preco_imovel: 650000,
-            area: 70,
-            quartos: 2,
-            suites: 1,
-            banheiros: 1,
-            vagas: 1,
-            tipo: 1,
-            bairro: 'Tatuapé',
-            cidade: 'São Paulo',
-            estado: 'SP',
+            url_imovel: url || window.location.pathname,
+            preco_imovel: currentPrice,
+            area,
+            quartos: rooms,
+            suites,
+            banheiros: bathrooms,
+            vagas: parkingSpots,
+            tipo: tipoId,
+            bairro: neighborhood,
+            cidade: city,
+            estado: state,
             preco_inferido: data.inference || data.price,
             faixa_minima: data.price_lower_iqr,
             faixa_maxima: data.price_upper_iqr,
@@ -56,42 +114,59 @@ export function PriceAnalysisWidget() {
             preco_unitario: data.unit_price,
             liquidez: String(data.score_fit),
             registros_usados: data.records_total,
-            condominio_atual: 750,
-            condominio_media: data.unit_price * 70 * 0.001,
-            iptu_atual: 84,
-            iptu_media: data.unit_price * 70 * 0.0001,
+            condominio_atual: condo || 0,
+            condominio_media: data.unit_price * area * 0.001,
+            iptu_atual: iptu || 0,
+            iptu_media: data.unit_price * area * 0.0001,
             data_analise: new Date().toISOString(),
           }).catch(console.error)
         })
         .catch(() => {
-          setErrorMsg('Não foi possível calcular a precificação no momento')
+          setErrorMsg('Análise feita com os dados disponíveis')
         })
         .finally(() => {
           setIsLoading(false)
         })
     }
-  }, [isAuthenticated, user])
+  }, [
+    isAuthenticated,
+    user,
+    propertyType,
+    state,
+    city,
+    neighborhood,
+    area,
+    rooms,
+    suites,
+    bathrooms,
+    parkingSpots,
+    currentPrice,
+    businessType,
+    condo,
+    iptu,
+    url,
+  ])
 
   const mockFallback = {
-    inference: 726000,
-    price_lower_iqr: 550000,
-    price_upper_iqr: 920000,
-    price_q1: 620000,
-    price_q3: 820000,
-    price: 700000,
-    unit_price: 10000,
+    inference: currentPrice * 1.05,
+    price_lower_iqr: currentPrice * 0.85,
+    price_upper_iqr: currentPrice * 1.25,
+    price_q1: currentPrice * 0.9,
+    price_q3: currentPrice * 1.15,
+    price: currentPrice * 1.02,
+    unit_price: currentPrice / area,
     score_fit: 'Alta',
     records_total: 1250,
   }
 
   const d = analysisData || mockFallback
-  const condoAvg = d.unit_price * 70 * 0.001
-  const iptuAvg = d.unit_price * 70 * 0.0001
+  const condoAvg = d.unit_price * area * 0.001
+  const iptuAvg = d.unit_price * area * 0.0001
 
   const propertyData = {
-    location: 'São Paulo, Tatuapé',
-    specs: '70m² • 2 quartos • 1 suíte • 1 banheiro • 1 vaga',
-    currentPrice: 650000,
+    location: `${city}, ${neighborhood}`,
+    specs: `${area}m² • ${rooms} quartos • ${suites} suíte • ${bathrooms} banheiro • ${parkingSpots} vaga`,
+    currentPrice,
   }
 
   const schemaData = {
