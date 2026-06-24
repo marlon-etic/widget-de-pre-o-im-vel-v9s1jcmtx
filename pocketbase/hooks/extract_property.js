@@ -9,6 +9,35 @@ routerAdd(
     if (!userId) return e.unauthorizedError('Auth required')
     if (!url) return e.badRequestError('URL is required')
 
+    // Check for cached analysis in the last 24 hours to optimize performance
+    try {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().replace('T', ' ')
+      const cached = $app.findFirstRecordByFilter(
+        'analises_imoveis',
+        'url_imovel = {:url} && created >= {:date}',
+        { url, date: yesterday },
+      )
+      if (cached) {
+        return e.json(200, {
+          preco_imovel: cached.getFloat('preco_imovel') || null,
+          area: cached.getFloat('area') || null,
+          quartos: cached.getInt('quartos') || null,
+          suites: cached.getInt('suites') || null,
+          banheiros: cached.getInt('banheiros') || null,
+          vagas: cached.getInt('vagas') || null,
+          condominio_atual: cached.getFloat('condominio_atual') || null,
+          iptu_atual: cached.getFloat('iptu_atual') || null,
+          tipo: cached.getString('tipo') || null,
+          bairro: cached.getString('bairro') || null,
+          cidade: cached.getString('cidade') || null,
+          estado: cached.getString('estado') || null,
+          _cached: true,
+        })
+      }
+    } catch (_) {
+      // not found, proceed
+    }
+
     let text = ''
     try {
       const res = $http.send({
@@ -39,7 +68,7 @@ routerAdd(
 
     const agentMessage = `Extract the property data from this URL: ${url}\n\nPage Content:\n${text || 'No page content could be retrieved. Please try to deduce any info from the URL.'}`
 
-    const result = $ai.agent('property-extractor').chat({
+    const result = $ai.agent('property-data-extractor').chat({
       user_id: userId,
       message: agentMessage,
     })

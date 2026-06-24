@@ -118,7 +118,25 @@ export default function TestIntegration() {
         estado: res.estado || prev.estado,
       }))
 
-      toast.success('Dados extraídos com sucesso!')
+      const missingFields = []
+      if (res.preco_imovel == null || res.preco_imovel === 0) missingFields.push('Preço')
+      if (res.area == null || res.area === 0) missingFields.push('Área')
+      if (res.quartos == null || res.quartos === 0) missingFields.push('Quartos')
+      if (res.banheiros == null || res.banheiros === 0) missingFields.push('Banheiros')
+      if (res.vagas == null || res.vagas === 0) missingFields.push('Vagas')
+      if (res.condominio_atual == null || res.condominio_atual === 0)
+        missingFields.push('Condomínio')
+      if (res.iptu_atual == null || res.iptu_atual === 0) missingFields.push('IPTU')
+
+      if (missingFields.length > 0) {
+        toast.warning(
+          `Alguns campos não foram encontrados: ${missingFields.join(', ')}. Por favor, preencha-os manualmente.`,
+        )
+      } else {
+        toast.success(
+          res._cached ? 'Dados recuperados do cache com sucesso!' : 'Dados extraídos com sucesso!',
+        )
+      }
     } catch (err: any) {
       toast.error(err.message || 'Erro ao extrair dados da URL')
     } finally {
