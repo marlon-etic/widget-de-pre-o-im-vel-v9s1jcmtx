@@ -9,15 +9,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Copy, ExternalLink, Check, Code2, Sparkles, Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Copy, ExternalLink, Check, Sparkles, Loader2, Calculator } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import pb from '@/lib/pocketbase/client'
+import { fetchNivuAnalysis, createAnalise } from '@/services/analises'
 
 export default function TestIntegration() {
-  const { isAuthenticated, loading } = useAuth()
+  const { user, isAuthenticated, loading } = useAuth()
   const [isExtracting, setIsExtracting] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [copied, setCopied] = useState(false)
+
   const [formData, setFormData] = useState({
     estado: 'SP',
     cidade: 'São Paulo',
@@ -36,7 +49,8 @@ export default function TestIntegration() {
       'https://marlon.sites.superadmin.ia.br/imoveis/apartamento-a-venda-2-quartos-tatuape-sao-paulo-lgap06',
   })
 
-  const [copied, setCopied] = useState(false)
+  const [nivuPayload, setNivuPayload] = useState<any>(null)
+  const [nivuResult, setNivuResult] = useState<any>(null)
 
   const sanitize = (str: string) => {
     if (!str) return ''
@@ -45,6 +59,32 @@ export default function TestIntegration() {
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .replace(/\s+/g, '-')
+  }
+
+  const formatDisplay = (str: string) => {
+    if (!str) return ''
+    return str.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+  }
+
+  const propertyTypeMap: Record<string, number> = {
+    apartamento: 1,
+    studio: 2,
+    loft: 15,
+    casa: 3,
+    sobrado: 16,
+    'casa-em-condominio': 4,
+    sala: 5,
+    predio: 6,
+    terreno: 8,
+    chacara: 9,
+    fazenda: 10,
+    loja: 11,
+    'deposito-pavilhao': 12,
+    deposito: 12,
+    pavilhao: 12,
+    'vaga-de-estacionamento': 13,
+    vaga: 13,
+    andar: 14,
   }
 
   const buildUrl = () => {
@@ -144,235 +184,377 @@ export default function TestIntegration() {
     }
   }
 
+  const handleAnalyzeNivu = async () => {
+    const requiredFields = ['estado', 'cidade', 'bairro', 'tipo', 'negocio', 'area', 'preco']
+    const missing = requiredFields.filter((f) => !formData[f as keyof typeof formData])
+    if (missing.length > 0) {
+      toast.error(`Campos obrigatórios faltando: ${missing.join(', ')}`)
+      return
+    }
+
+    const area = Number(formData.area)
+    const currentPrice = Number(formData.preco)
+    if (area <= 0 || currentPrice <= 0) {
+      toast.error('Área e Preço devem ser maiores que zero.')
+      return
+    }
+
+    const location = `${formData.estado.toUpperCase().trim()} > ${formData.cidade.trim()} > ${formData.bairro.trim()}`
+    const unitPrice = currentPrice / area
+    const tipoId = propertyTypeMap[sanitize(formData.tipo)] || 1
+
+    const payload = {
+      location,
+      property_type: tipoId,
+      business_type: Number(formData.negocio),
+      area,
+      area_margin: 0.5,
+      unit_price: unitPrice,
+      unit_price_margin: 0.5,
+      rooms: Number(formData.quartos) || 0,
+      suites: Number(formData.suites) || 0,
+      bathrooms: Number(formData.banheiros) || 0,
+      parking_spots: Number(formData.vagas) || 0,
+    }
+
+    setNivuPayload(payload)
+    setIsAnalyzing(true)
+
+    try {
+      const data = await fetchNivuAnalysis(payload)
+      setNivuResult(data)
+
+      const condo = Number(formData.condominio) || 0
+      const iptu = Number(formData.iptu) || 0
+
+      await createAnalise({
+        usuario_id: user?.id,
+        url_imovel: formData.url_imovel || '',
+        preco_imovel: currentPrice,
+        area,
+        quartos: payload.rooms,
+        suites: payload.suites,
+        banheiros: payload.bathrooms,
+        vagas: payload.parking_spots,
+        tipo: tipoId,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
+        preco_inferido: data.inference || data.price,
+        faixa_minima: data.price_lower_iqr,
+        faixa_maxima: data.price_upper_iqr,
+        preco_medio: data.price,
+        preco_unitario: data.unit_price,
+        liquidez: String(data.score_fit),
+        registros_usados: data.records_total,
+        condominio_atual: condo,
+        condominio_media: data.unit_price * area * 0.001,
+        iptu_atual: iptu,
+        iptu_media: data.unit_price * area * 0.0001,
+        data_analise: new Date().toISOString(),
+      })
+
+      toast.success('Análise concluída e salva com sucesso!')
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || 'Falha ao analisar dados na API NIVU')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
+  }
+
   if (loading) return <div className="p-12 text-center text-slate-500">Carregando...</div>
   if (!isAuthenticated) return <Navigate to="/login" />
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Testar Integração do Widget</h1>
-        <p className="text-slate-600">
-          Preencha os dados do imóvel abaixo para gerar a URL com parâmetros e testar a exibição do
-          widget.
+    <div className="container max-w-6xl py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Testar Integração</h1>
+        <p className="text-muted-foreground">
+          Preencha os dados manualmente ou extraia a partir de uma URL para testar as ferramentas.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Form Section */}
-        <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
-            <Label htmlFor="url_imovel" className="text-slate-700 font-semibold">
-              URL do Imóvel
-            </Label>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Input
-                id="url_imovel"
-                name="url_imovel"
-                value={formData.url_imovel}
-                onChange={handleChange}
-                placeholder="https://exemplo.com/imovel"
-                className="flex-1 bg-white"
-              />
-              <Button
-                onClick={handleExtract}
-                disabled={isExtracting || !formData.url_imovel}
-                className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                {isExtracting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extraindo...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4 text-amber-300" /> Preencher com IA
-                  </>
-                )}
-              </Button>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Cole a URL e deixe nossa IA identificar e preencher os dados do imóvel
-              automaticamente.
-            </p>
-          </div>
+      <div className="grid lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Extração de Dados</CardTitle>
+              <CardDescription>
+                Cole a URL do imóvel para preencher os dados automaticamente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>URL do Imóvel</Label>
+                <div className="flex gap-2">
+                  <Input
+                    name="url_imovel"
+                    value={formData.url_imovel}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                  />
+                  <Button onClick={handleExtract} disabled={isExtracting} className="w-32 shrink-0">
+                    {isExtracting ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 mr-2" />
+                    )}
+                    Extrair
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="estado">Estado</Label>
-              <Input id="estado" name="estado" value={formData.estado} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade</Label>
-              <Input id="cidade" name="cidade" value={formData.cidade} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bairro">Bairro</Label>
-              <Input id="bairro" name="bairro" value={formData.bairro} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo de Imóvel</Label>
-              <Select value={formData.tipo} onValueChange={(v) => handleSelectChange('tipo', v)}>
-                <SelectTrigger id="tipo">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apartamento">Apartamento</SelectItem>
-                  <SelectItem value="studio">Studio</SelectItem>
-                  <SelectItem value="loft">Loft</SelectItem>
-                  <SelectItem value="casa">Casa</SelectItem>
-                  <SelectItem value="sobrado">Sobrado</SelectItem>
-                  <SelectItem value="casa-em-condominio">Casa em Condomínio</SelectItem>
-                  <SelectItem value="sala">Sala</SelectItem>
-                  <SelectItem value="predio">Prédio</SelectItem>
-                  <SelectItem value="terreno">Terreno</SelectItem>
-                  <SelectItem value="chacara">Chácara</SelectItem>
-                  <SelectItem value="fazenda">Fazenda</SelectItem>
-                  <SelectItem value="loja">Loja</SelectItem>
-                  <SelectItem value="deposito">Depósito/Pavilhão</SelectItem>
-                  <SelectItem value="vaga">Vaga de estacionamento</SelectItem>
-                  <SelectItem value="andar">Andar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="negocio">Negócio</Label>
-              <Select
-                value={formData.negocio}
-                onValueChange={(v) => handleSelectChange('negocio', v)}
-              >
-                <SelectTrigger id="negocio">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Venda (1)</SelectItem>
-                  <SelectItem value="2">Aluguel (2)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="preco">Preço (R$)</Label>
-              <Input
-                id="preco"
-                name="preco"
-                type="number"
-                value={formData.preco}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="area">Área (m²)</Label>
-              <Input
-                id="area"
-                name="area"
-                type="number"
-                value={formData.area}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="quartos">Quartos</Label>
-              <Input
-                id="quartos"
-                name="quartos"
-                type="number"
-                value={formData.quartos}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="suites">Suítes</Label>
-              <Input
-                id="suites"
-                name="suites"
-                type="number"
-                value={formData.suites}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="banheiros">Banheiros</Label>
-              <Input
-                id="banheiros"
-                name="banheiros"
-                type="number"
-                value={formData.banheiros}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="vagas">Vagas</Label>
-              <Input
-                id="vagas"
-                name="vagas"
-                type="number"
-                value={formData.vagas}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="condominio">Condomínio (R$)</Label>
-              <Input
-                id="condominio"
-                name="condominio"
-                type="number"
-                value={formData.condominio}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="iptu">IPTU (R$)</Label>
-              <Input
-                id="iptu"
-                name="iptu"
-                type="number"
-                value={formData.iptu}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados do Imóvel</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Estado (UF)</Label>
+                  <Input name="estado" value={formData.estado} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cidade</Label>
+                  <Input name="cidade" value={formData.cidade} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bairro</Label>
+                  <Input name="bairro" value={formData.bairro} onChange={handleChange} />
+                </div>
+              </div>
 
-          <Button onClick={handleTest} className="w-full mt-4 h-12 text-md" variant="default">
-            <ExternalLink className="mr-2 h-5 w-5" /> Testar Widget em Nova Aba
-          </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo do Imóvel</Label>
+                  <Select
+                    value={formData.tipo}
+                    onValueChange={(v) => handleSelectChange('tipo', v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(propertyTypeMap).map((k) => (
+                        <SelectItem key={k} value={k}>
+                          {formatDisplay(k)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Negócio</Label>
+                  <Select
+                    value={formData.negocio}
+                    onValueChange={(v) => handleSelectChange('negocio', v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Venda</SelectItem>
+                      <SelectItem value="2">Aluguel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label>Área (m²)</Label>
+                  <Input name="area" type="number" value={formData.area} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Quartos</Label>
+                  <Input
+                    name="quartos"
+                    type="number"
+                    value={formData.quartos}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Suítes</Label>
+                  <Input
+                    name="suites"
+                    type="number"
+                    value={formData.suites}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Banheiros</Label>
+                  <Input
+                    name="banheiros"
+                    type="number"
+                    value={formData.banheiros}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Vagas</Label>
+                  <Input
+                    name="vagas"
+                    type="number"
+                    value={formData.vagas}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Preço (R$)</Label>
+                  <Input
+                    name="preco"
+                    type="number"
+                    value={formData.preco}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Condomínio</Label>
+                  <Input
+                    name="condominio"
+                    type="number"
+                    value={formData.condominio}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>IPTU</Label>
+                  <Input name="iptu" type="number" value={formData.iptu} onChange={handleChange} />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t">
+                <Button onClick={handleAnalyzeNivu} disabled={isAnalyzing} className="flex-1">
+                  {isAnalyzing ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Calculator className="w-4 h-4 mr-2" />
+                  )}
+                  Analisar com NIVU
+                </Button>
+                <Button variant="outline" onClick={handleTest} className="flex-1">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Testar Widget
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Snippet Section */}
         <div className="space-y-6">
-          <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-lg flex flex-col">
-            <div className="bg-slate-800 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-              <div className="flex items-center text-slate-300 font-medium text-sm">
-                <Code2 className="mr-2 h-4 w-4" />
-                Snippet de Integração (Iframe)
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Código de Integração</CardTitle>
+                <Button variant="ghost" size="icon" onClick={handleCopy}>
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-slate-300 hover:text-white hover:bg-slate-700"
-                onClick={handleCopy}
-              >
-                {copied ? (
-                  <Check className="mr-1.5 h-4 w-4 text-emerald-400" />
-                ) : (
-                  <Copy className="mr-1.5 h-4 w-4" />
-                )}
-                {copied ? 'Copiado!' : 'Copiar'}
-              </Button>
-            </div>
-            <div className="p-4 bg-slate-900 overflow-x-auto">
-              <pre className="text-sm text-slate-300 font-mono">
+            </CardHeader>
+            <CardContent>
+              <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-sm">
                 <code>{iframeCode}</code>
               </pre>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
-            <h3 className="font-semibold text-blue-900 mb-2">Como integrar</h3>
-            <p className="text-sm text-blue-800 leading-relaxed">
-              O widget pode ser incorporado em qualquer site de e-commerce imobiliário utilizando um
-              iframe. Ao utilizar os parâmetros via URL, os valores informados sobrescrevem os dados
-              padrão de demonstração. O tamanho máximo recomendado para o iframe é de 500px de
-              largura.
-            </p>
-          </div>
+          {nivuPayload && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados Enviados (Payload Nivu)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableHead className="w-1/2">Localização</TableHead>
+                      <TableCell>{nivuPayload.location}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Tipo de Imóvel ID</TableHead>
+                      <TableCell>{nivuPayload.property_type}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Preço Unitário Calculado</TableHead>
+                      <TableCell>{formatCurrency(nivuPayload.unit_price)}/m²</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Quartos / Suítes / Banh. / Vagas</TableHead>
+                      <TableCell>
+                        {nivuPayload.rooms} / {nivuPayload.suites} / {nivuPayload.bathrooms} /{' '}
+                        {nivuPayload.parking_spots}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {nivuResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Resultados da Análise (Nivu API)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableHead className="w-1/2">Preço Inferido</TableHead>
+                      <TableCell className="font-medium text-primary">
+                        {formatCurrency(nivuResult.inference || nivuResult.price)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Faixa de Preço (Mín - Máx)</TableHead>
+                      <TableCell>
+                        {formatCurrency(nivuResult.price_lower_iqr)} -{' '}
+                        {formatCurrency(nivuResult.price_upper_iqr)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Preço Médio / Preço Unitário</TableHead>
+                      <TableCell>
+                        {formatCurrency(nivuResult.price)} / {formatCurrency(nivuResult.unit_price)}
+                        /m²
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Nível de Liquidez</TableHead>
+                      <TableCell>{nivuResult.score_fit}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Tamanho da Amostra</TableHead>
+                      <TableCell>{nivuResult.records_total} registros</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Condomínio / IPTU (Estimado)</TableHead>
+                      <TableCell>
+                        {formatCurrency(nivuResult.unit_price * nivuPayload.area * 0.001)} /{' '}
+                        {formatCurrency(nivuResult.unit_price * nivuPayload.area * 0.0001)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
