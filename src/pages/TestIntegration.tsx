@@ -33,7 +33,7 @@ export default function TestIntegration() {
     condominio: '750',
     iptu: '84',
     url_imovel:
-      'https://marlon.sites.superadmin.ia.br/imoveis/apartamento-a-venda-2-quartos-tatuape-sao-paulo',
+      'https://marlon.sites.superadmin.ia.br/imoveis/apartamento-a-venda-2-quartos-tatuape-sao-paulo-lgap06',
   })
 
   const [copied, setCopied] = useState(false)

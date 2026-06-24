@@ -66,7 +66,28 @@ routerAdd(
       console.log(`[Extrator] HTTP fetch error for ${url}: ${err.message}`)
     }
 
-    const agentMessage = `Extract the property data from this URL: ${url}\n\nPage Content:\n${text || 'No page content could be retrieved. Please try to deduce any info from the URL.'}`
+    const agentMessage = `Extract the property data from this URL: ${url}
+
+Page Content:
+${text || 'No page content could be retrieved. Please try to deduce any info from the URL.'}
+
+IMPORTANT: You MUST return ONLY a valid JSON object. Do NOT wrap it in markdown blocks (like \`\`\`json). Do NOT add any preamble or trailing text. If a value is missing or unknown, use null. All numeric fields should be numbers, not strings.
+
+Expected JSON format:
+{
+  "preco_imovel": number | null,
+  "area": number | null,
+  "quartos": number | null,
+  "suites": number | null,
+  "banheiros": number | null,
+  "vagas": number | null,
+  "condominio_atual": number | null,
+  "iptu_atual": number | null,
+  "tipo": string | null,
+  "bairro": string | null,
+  "cidade": string | null,
+  "estado": string | null
+}`
 
     const result = $ai.agent('property-data-extractor').chat({
       user_id: userId,
@@ -75,10 +96,17 @@ routerAdd(
 
     let parsed = {}
     try {
-      const jsonStr = result.content
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
+      let jsonStr = result.content
+      const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+      if (match) {
+        jsonStr = match[1]
+      } else {
+        const start = jsonStr.indexOf('{')
+        const end = jsonStr.lastIndexOf('}')
+        if (start !== -1 && end !== -1) {
+          jsonStr = jsonStr.substring(start, end + 1)
+        }
+      }
       parsed = JSON.parse(jsonStr)
     } catch (err) {
       console.log(`[Extrator] Failed to parse AI JSON. Raw output: ${result.content}`)
