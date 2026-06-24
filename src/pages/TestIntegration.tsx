@@ -24,6 +24,7 @@ import { Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import pb from '@/lib/pocketbase/client'
 import { fetchNivuAnalysis, createAnalise } from '@/services/analises'
+import { getErrorMessage } from '@/lib/pocketbase/errors'
 
 export default function TestIntegration() {
   const { user, isAuthenticated, loading } = useAuth()
@@ -178,7 +179,7 @@ export default function TestIntegration() {
         )
       }
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao extrair dados da URL')
+      toast.error(getErrorMessage(err) || 'Erro ao extrair dados da URL')
     } finally {
       setIsExtracting(false)
     }
@@ -257,7 +258,7 @@ export default function TestIntegration() {
       toast.success('Análise concluída e salva com sucesso!')
     } catch (err: any) {
       console.error(err)
-      toast.error(err.message || 'Falha ao analisar dados na API NIVU')
+      toast.error(getErrorMessage(err) || 'Falha ao analisar dados na API NIVU')
     } finally {
       setIsAnalyzing(false)
     }

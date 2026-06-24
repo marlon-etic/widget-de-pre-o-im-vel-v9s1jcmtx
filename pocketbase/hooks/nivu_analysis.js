@@ -5,6 +5,20 @@ routerAdd(
     const body = e.requestInfo().body
     const apiKey = $secrets.get('NIVU_API_KEY')
 
+    const mappedPayload = {
+      location: typeof body.location === 'string' ? body.location.replace(/\s*>\s*/g, '>') : '',
+      type: body.property_type,
+      business: body.business_type,
+      area: body.area,
+      areaRange: body.area_margin,
+      unitPrice: body.unit_price,
+      unitPriceRange: body.unit_price_margin,
+      bedrooms: body.rooms,
+      suites: body.suites,
+      bathrooms: body.bathrooms,
+      parkingSpaces: body.parking_spots,
+    }
+
     if (!apiKey) {
       return e.json(200, {
         inference: body.unit_price * body.area * 1.05,
@@ -26,12 +40,18 @@ routerAdd(
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + apiKey,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(mappedPayload),
       timeout: 15,
     })
 
     if (res.statusCode !== 200) {
-      return e.badRequestError('Falha ao comunicar com a API NIVU')
+      let errorMessage = 'Falha ao comunicar com a API NIVU'
+      if (res.json) {
+        if (typeof res.json.message === 'string') errorMessage = res.json.message
+        else if (typeof res.json.error === 'string') errorMessage = res.json.error
+        else errorMessage = JSON.stringify(res.json)
+      }
+      return e.badRequestError(errorMessage)
     }
 
     return e.json(200, res.json)
