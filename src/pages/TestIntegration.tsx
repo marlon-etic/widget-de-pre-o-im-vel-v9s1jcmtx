@@ -101,14 +101,17 @@ export default function TestIntegration() {
 
       setFormData((prev) => ({
         ...prev,
-        preco: res.preco_imovel ? String(res.preco_imovel) : prev.preco,
-        area: res.area ? String(res.area) : prev.area,
-        quartos: res.quartos ? String(res.quartos) : prev.quartos,
-        suites: res.suites ? String(res.suites) : prev.suites,
-        banheiros: res.banheiros ? String(res.banheiros) : prev.banheiros,
-        vagas: res.vagas ? String(res.vagas) : prev.vagas,
-        condominio: res.condominio_atual ? String(res.condominio_atual) : prev.condominio,
-        iptu: res.iptu_atual ? String(res.iptu_atual) : prev.iptu,
+        preco: res.preco_imovel != null && res.preco_imovel !== 0 ? String(res.preco_imovel) : '',
+        area: res.area != null && res.area !== 0 ? String(res.area) : '',
+        quartos: res.quartos != null && res.quartos !== 0 ? String(res.quartos) : '',
+        suites: res.suites != null && res.suites !== 0 ? String(res.suites) : '',
+        banheiros: res.banheiros != null && res.banheiros !== 0 ? String(res.banheiros) : '',
+        vagas: res.vagas != null && res.vagas !== 0 ? String(res.vagas) : '',
+        condominio:
+          res.condominio_atual != null && res.condominio_atual !== 0
+            ? String(res.condominio_atual)
+            : '',
+        iptu: res.iptu_atual != null && res.iptu_atual !== 0 ? String(res.iptu_atual) : '',
         tipo: res.tipo ? res.tipo.toLowerCase() : prev.tipo,
         bairro: res.bairro || prev.bairro,
         cidade: res.cidade || prev.cidade,
