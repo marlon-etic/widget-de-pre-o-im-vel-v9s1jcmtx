@@ -9,12 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Copy, ExternalLink, Check, Code2 } from 'lucide-react'
+import { Copy, ExternalLink, Check, Code2, Sparkles, Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { Navigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import pb from '@/lib/pocketbase/client'
 
 export default function TestIntegration() {
   const { isAuthenticated, loading } = useAuth()
+  const [isExtracting, setIsExtracting] = useState(false)
   const [formData, setFormData] = useState({
     estado: 'SP',
     cidade: 'São Paulo',
@@ -82,6 +85,44 @@ export default function TestIntegration() {
     setFormData({ ...formData, [name]: value })
   }
 
+  const handleExtract = async () => {
+    if (!formData.url_imovel) {
+      toast.error('Informe a URL do imóvel primeiro')
+      return
+    }
+
+    setIsExtracting(true)
+    try {
+      const res = await pb.send('/backend/v1/extract-property', {
+        method: 'POST',
+        body: JSON.stringify({ url: formData.url_imovel }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      setFormData((prev) => ({
+        ...prev,
+        preco: res.preco_imovel ? String(res.preco_imovel) : prev.preco,
+        area: res.area ? String(res.area) : prev.area,
+        quartos: res.quartos ? String(res.quartos) : prev.quartos,
+        suites: res.suites ? String(res.suites) : prev.suites,
+        banheiros: res.banheiros ? String(res.banheiros) : prev.banheiros,
+        vagas: res.vagas ? String(res.vagas) : prev.vagas,
+        condominio: res.condominio_atual ? String(res.condominio_atual) : prev.condominio,
+        iptu: res.iptu_atual ? String(res.iptu_atual) : prev.iptu,
+        tipo: res.tipo ? res.tipo.toLowerCase() : prev.tipo,
+        bairro: res.bairro || prev.bairro,
+        cidade: res.cidade || prev.cidade,
+        estado: res.estado || prev.estado,
+      }))
+
+      toast.success('Dados extraídos com sucesso!')
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao extrair dados da URL')
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
   if (loading) return <div className="p-12 text-center text-slate-500">Carregando...</div>
   if (!isAuthenticated) return <Navigate to="/login" />
 
@@ -98,6 +139,41 @@ export default function TestIntegration() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Form Section */}
         <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+            <Label htmlFor="url_imovel" className="text-slate-700 font-semibold">
+              URL do Imóvel
+            </Label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                id="url_imovel"
+                name="url_imovel"
+                value={formData.url_imovel}
+                onChange={handleChange}
+                placeholder="https://exemplo.com/imovel"
+                className="flex-1 bg-white"
+              />
+              <Button
+                onClick={handleExtract}
+                disabled={isExtracting || !formData.url_imovel}
+                className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                {isExtracting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extraindo...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4 text-amber-300" /> Preencher com IA
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Cole a URL e deixe nossa IA identificar e preencher os dados do imóvel
+              automaticamente.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="estado">Estado</Label>
@@ -231,15 +307,6 @@ export default function TestIntegration() {
                 onChange={handleChange}
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="url_imovel">URL do Imóvel</Label>
-            <Input
-              id="url_imovel"
-              name="url_imovel"
-              value={formData.url_imovel}
-              onChange={handleChange}
-            />
           </div>
 
           <Button onClick={handleTest} className="w-full mt-4 h-12 text-md" variant="default">
