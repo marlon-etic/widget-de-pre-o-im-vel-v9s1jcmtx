@@ -81,10 +81,12 @@ export function PriceAnalysisWidget({
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const isUnlocked = isAuthenticated
+  // A análise é pública durante a fase de teste. A autenticação continua
+  // disponível apenas para salvar o lead/análise quando houver um usuário.
+  const isUnlocked = true
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (area > 0 && currentPrice > 0) {
       setIsLoading(true)
       setErrorMsg('')
 
@@ -107,32 +109,34 @@ export function PriceAnalysisWidget({
       })
         .then((data) => {
           setAnalysisData(data)
-          createAnalise({
-            usuario_id: user.id,
-            url_imovel: url || window.location.pathname,
-            preco_imovel: currentPrice,
-            area,
-            quartos: rooms,
-            suites,
-            banheiros: bathrooms,
-            vagas: parkingSpots,
-            tipo: tipoId,
-            bairro: neighborhood,
-            cidade: city,
-            estado: state,
-            preco_inferido: data.inference || data.price,
-            faixa_minima: data.price_lower_iqr,
-            faixa_maxima: data.price_upper_iqr,
-            preco_medio: data.price,
-            preco_unitario: data.unit_price,
-            liquidez: String(data.score_fit),
-            registros_usados: data.records_total,
-            condominio_atual: condo || 0,
-            condominio_media: data.unit_price * area * 0.001,
-            iptu_atual: iptu || 0,
-            iptu_media: data.unit_price * area * 0.0001,
-            data_analise: new Date().toISOString(),
-          }).catch(console.error)
+          if (user) {
+            createAnalise({
+              usuario_id: user.id,
+              url_imovel: url || window.location.pathname,
+              preco_imovel: currentPrice,
+              area,
+              quartos: rooms,
+              suites,
+              banheiros: bathrooms,
+              vagas: parkingSpots,
+              tipo: tipoId,
+              bairro: neighborhood,
+              cidade: city,
+              estado: state,
+              preco_inferido: data.inference || data.price,
+              faixa_minima: data.price_lower_iqr,
+              faixa_maxima: data.price_upper_iqr,
+              preco_medio: data.price,
+              preco_unitario: data.unit_price,
+              liquidez: String(data.score_fit),
+              registros_usados: data.records_total,
+              condominio_atual: condo || 0,
+              condominio_media: data.unit_price * area * 0.001,
+              iptu_atual: iptu || 0,
+              iptu_media: data.unit_price * area * 0.0001,
+              data_analise: new Date().toISOString(),
+            }).catch(console.error)
+          }
         })
         .catch(() => {
           setErrorMsg('Análise feita com os dados disponíveis')
