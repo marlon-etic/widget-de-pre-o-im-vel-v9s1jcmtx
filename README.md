@@ -129,3 +129,32 @@ npm run build
 ```
 
 Os arquivos otimizados serão gerados na pasta `dist/` e estarão prontos para deploy.
+
+## Integração nas páginas da Etic
+
+Inclua uma única vez no template global das páginas de imóveis:
+
+```html
+<div
+  data-imovel-widget
+  data-tipo="casa-em-condominio"
+  data-estado="sp"
+  data-cidade="sao-paulo"
+  data-bairro="mooca"
+  data-area="70"
+  data-quartos="2"
+  data-suites="2"
+  data-banheiros="3"
+  data-vagas="2"
+  data-preco="675000"
+  data-condominio="399"
+  data-iptu="103"
+  data-negocio="1"
+></div>
+<script
+  src="https://widget-de-preco-imovel-816eb.goskip.app/property-widget.js"
+  defer
+></script>
+```
+
+O template deve preencher os atributos com os valores reais do imóvel. O script cria o iframe automaticamente e mantém a chave da API protegida no backend.

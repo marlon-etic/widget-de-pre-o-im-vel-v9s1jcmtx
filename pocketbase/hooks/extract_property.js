@@ -52,7 +52,7 @@ routerAdd(
       })
 
       if (res.statusCode === 200 && res.body) {
-        text = new TextDecoder().decode(res.body)
+        text = typeof res.body === 'string' ? res.body : new TextDecoder().decode(res.body)
         text = text
           .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
           .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')

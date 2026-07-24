@@ -139,7 +139,8 @@ export function PriceAnalysisWidget({
           }
         })
         .catch(() => {
-          setErrorMsg('Análise feita com os dados disponíveis')
+          setAnalysisData(null)
+          setErrorMsg('Não foi possível concluir a análise com a API de precificação.')
         })
         .finally(() => {
           setIsLoading(false)
@@ -164,21 +165,9 @@ export function PriceAnalysisWidget({
     url,
   ])
 
-  const mockFallback = {
-    inference: currentPrice * 1.05,
-    price_lower_iqr: currentPrice * 0.85,
-    price_upper_iqr: currentPrice * 1.25,
-    price_q1: currentPrice * 0.9,
-    price_q3: currentPrice * 1.15,
-    price: currentPrice * 1.02,
-    unit_price: currentPrice / area,
-    score_fit: 'Alta',
-    records_total: 1250,
-  }
-
-  const d = analysisData || mockFallback
-  const condoAvg = d.unit_price * area * 0.001
-  const iptuAvg = d.unit_price * area * 0.0001
+  const d = analysisData
+  const condoAvg = d ? d.unit_price * area * 0.001 : 0
+  const iptuAvg = d ? d.unit_price * area * 0.0001 : 0
 
   const propertyData = {
     location: `${formatDisplay(city)}, ${formatDisplay(neighborhood)}`,
@@ -191,7 +180,9 @@ export function PriceAnalysisWidget({
     '@type': 'PriceSpecification',
     price: propertyData.currentPrice,
     priceCurrency: 'BRL',
-    description: `Estimativa de mercado: R$ ${d.inference}`,
+    description: d
+      ? `Estimativa de mercado: R$ ${d.inference}`
+      : 'Análise de preço do imóvel em andamento',
   }
 
   return (
@@ -266,7 +257,7 @@ export function PriceAnalysisWidget({
                 <div className="flex-1 flex items-center justify-center">
                   <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
                 </div>
-              ) : (
+              ) : d ? (
                 <>
                   <PriceVisualizer
                     min={d.price_lower_iqr}
@@ -276,14 +267,18 @@ export function PriceAnalysisWidget({
                     currentPrice={propertyData.currentPrice}
                   />
                   <ComparisonSection
-                    condo={condo || 750}
-                    iptu={iptu || 84}
+                    condo={condo || 0}
+                    iptu={iptu || 0}
                     condoAvg={condoAvg}
                     iptuAvg={iptuAvg}
                     recordsTotal={d.records_total}
                     scoreFit={d.score_fit}
                   />
                 </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-center text-sm text-slate-500 p-6">
+                  {errorMsg || 'Não foi possível concluir a análise deste imóvel.'}
+                </div>
               )}
             </>
           )}

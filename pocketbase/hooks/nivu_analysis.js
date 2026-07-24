@@ -1,6 +1,5 @@
 routerAdd('POST', '/backend/v1/nivu-analysis', (e) => {
-  const body = e.requestInfo().body
-  const apiKey = $secrets.get('NIVU_API_KEY')
+  const body = e.requestInfo().body || {}  const apiKey = $secrets.get('NIVU_API_KEY')
 
   const mappedPayload = {
     location: typeof body.location === 'string' ? body.location.replace(/\s*>\s*/g, '>') : '',
