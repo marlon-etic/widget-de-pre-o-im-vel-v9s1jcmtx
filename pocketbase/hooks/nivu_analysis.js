@@ -2,6 +2,15 @@ routerAdd('POST', '/backend/v1/nivu-analysis', (e) => {
   const body = e.requestInfo().body || {}
   const apiKey = $secrets.get('NIVU_API_KEY')
 
+  const toNivuCategory = (value) => {
+    const numericValue = Number(value)
+    if (!Number.isFinite(numericValue) || numericValue <= 0) return 0
+    if (numericValue === 1) return 2
+    if (numericValue === 2) return 3
+    if (numericValue === 3) return 4
+    return 5
+  }
+
   const mappedPayload = {
     location: typeof body.location === 'string' ? body.location.replace(/\s*>\s*/g, '>') : '',
     type: body.property_type,
@@ -10,10 +19,10 @@ routerAdd('POST', '/backend/v1/nivu-analysis', (e) => {
     areaRange: body.area_margin,
     unitPrice: body.unit_price,
     unitPriceRange: body.unit_price_margin,
-    bedrooms: body.rooms,
-    suites: body.suites,
-    bathrooms: body.bathrooms,
-    parkingSpaces: body.parking_spots,
+    bedrooms: toNivuCategory(body.rooms),
+    suites: toNivuCategory(body.suites),
+    bathrooms: toNivuCategory(body.bathrooms),
+    parkingSpaces: toNivuCategory(body.parking_spots),
   }
 
   if (!apiKey) {
