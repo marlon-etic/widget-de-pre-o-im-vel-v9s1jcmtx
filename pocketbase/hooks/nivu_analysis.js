@@ -17,25 +17,14 @@ routerAdd('POST', '/backend/v1/nivu-analysis', (e) => {
   }
 
   if (!apiKey) {
-    return e.json(200, {
-      inference: body.unit_price * body.area * 1.05,
-      price_lower_iqr: body.unit_price * body.area * 0.85,
-      price_upper_iqr: body.unit_price * body.area * 1.25,
-      price_q1: body.unit_price * body.area * 0.9,
-      price_q3: body.unit_price * body.area * 1.15,
-      price: body.unit_price * body.area * 1.02,
-      unit_price: body.unit_price * 1.02,
-      score_fit: 'Alta',
-      records_total: 1250,
-    })
+    return e.internalServerError('NIVU_API_KEY is not configured')
   }
 
   const res = $http.send({
-    url: 'https://api.nivu.com.br/v1/pricing',
+    url: 'https://api.nivu.com.br/v1/pricing-app/inference/udata-api/' + apiKey,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + apiKey,
     },
     body: JSON.stringify(mappedPayload),
     timeout: 15,
@@ -51,5 +40,27 @@ routerAdd('POST', '/backend/v1/nivu-analysis', (e) => {
     return e.badRequestError(errorMessage)
   }
 
-  return e.json(200, res.json)
+  const response = res.json || {}
+  const pricing = response.pricing || {}
+  const score = response.score || {}
+  const records = response.records || {}
+
+  return e.json(200, {
+    inference: pricing.inference,
+    price_lower_iqr: pricing.price_lower_iqr,
+    price_upper_iqr: pricing.price_upper_iqr,
+    price_q1: pricing.price_q1,
+    price_q3: pricing.price_q3,
+    price: pricing.price,
+    unit_price: pricing.unit_price,
+    score_fit: score.fit,
+    score_value: score.value,
+    records_total: records.total,
+    active_weeks: pricing.active_weeks,
+    area_usable: pricing.area_usable,
+    unit_price_lower_iqr: pricing.unit_price_lower_iqr,
+    unit_price_q1: pricing.unit_price_q1,
+    unit_price_q3: pricing.unit_price_q3,
+    unit_price_upper_iqr: pricing.unit_price_upper_iqr,
+  })
 })
