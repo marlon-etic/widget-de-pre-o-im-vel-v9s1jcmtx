@@ -27,10 +27,21 @@ const normalize = (value: string | null) =>
         .replace(/\s+/g, '-')
     : ''
 
-const numberParam = (params: URLSearchParams, key: string) => {
-  const value = Number(params.get(key))
-  return Number.isFinite(value) && value > 0 ? value : 0
+const parseNumber = (value: unknown) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string' || !value.trim()) return 0
+
+  const normalized = value.includes(',')
+    ? value.replace(/\./g, '').replace(',', '.')
+    : /^\d{1,3}(?:\.\d{3})+$/.test(value.trim())
+      ? value.replace(/\./g, '')
+      : value
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
 }
+
+const numberParam = (params: URLSearchParams, key: string) => parseNumber(params.get(key))
 
 export default function Widget() {
   const [searchParams] = useSearchParams()
@@ -76,15 +87,15 @@ export default function Widget() {
       state: normalize(searchParams.get('estado') || value.estado || ''),
       city: normalize(searchParams.get('cidade') || value.cidade || ''),
       neighborhood: normalize(searchParams.get('bairro') || value.bairro || ''),
-      area: numberParam(searchParams, 'area') || Number(value.area) || 0,
-      rooms: numberParam(searchParams, 'quartos') || Number(value.quartos) || 0,
-      suites: numberParam(searchParams, 'suites') || Number(value.suites) || 0,
-      bathrooms: numberParam(searchParams, 'banheiros') || Number(value.banheiros) || 0,
-      parkingSpots: numberParam(searchParams, 'vagas') || Number(value.vagas) || 0,
-      currentPrice: numberParam(searchParams, 'preco') || Number(value.preco_imovel) || 0,
+      area: numberParam(searchParams, 'area') || parseNumber(value.area),
+      rooms: numberParam(searchParams, 'quartos') || parseNumber(value.quartos),
+      suites: numberParam(searchParams, 'suites') || parseNumber(value.suites),
+      bathrooms: numberParam(searchParams, 'banheiros') || parseNumber(value.banheiros),
+      parkingSpots: numberParam(searchParams, 'vagas') || parseNumber(value.vagas),
+      currentPrice: numberParam(searchParams, 'preco') || parseNumber(value.preco_imovel),
       businessType: Number(searchParams.get('negocio')) || 1,
-      condo: numberParam(searchParams, 'condominio') || Number(value.condominio_atual) || 0,
-      iptu: numberParam(searchParams, 'iptu') || Number(value.iptu_atual) || 0,
+      condo: numberParam(searchParams, 'condominio') || parseNumber(value.condominio_atual),
+      iptu: numberParam(searchParams, 'iptu') || parseNumber(value.iptu_atual),
       url: propertyUrl || window.location.href,
     }
   }, [extracted, propertyUrl, searchParams])
