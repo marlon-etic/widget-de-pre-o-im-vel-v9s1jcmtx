@@ -136,12 +136,52 @@ routerAdd('POST', '/backend/v1/extract-property', (e) => {
     return e.json(200, parsedProperty)
   }
 
+  const extractionPrompt = `Extract the property data from this real-estate page.
+Return ONLY valid JSON with numeric values (not strings), using null for unknown fields.
+Required shape:
+{
+"preco_imovel": number | null,
+"area": number | null,
+"quartos": number | null,
+"suites": number | null,
+"banheiros": number | null,
+"vagas": number | null,
+"condominio_atual": number | null,
+"iptu_atual": number | null,
+"tipo": string | null,
+"bairro": string | null,
+"cidade": string | null,
+"estado": string | null
+}
+
+URL: ${url}
+
+Page content:
+${text}`
+
   if (!e.auth?.id) {
-    return e.internalServerError('Não foi possível extrair dados suficientes da página pública.')
+    try {
+      const publicReply = $ai.chat({
+        model: 'fast',
+        messages: [
+          {
+            role: 'system',
+            content: 'You extract structured real-estate data. Return JSON only.',
+          },
+          { role: 'user', content: extractionPrompt },
+        ],
+      })
+      const jsonStr = publicReply.choices[0].message.content
+      const start = jsonStr.indexOf('{')
+      const end = jsonStr.lastIndexOf('}')
+      return e.json(200, JSON.parse(jsonStr.substring(start, end + 1)))
+    } catch (err) {
+      console.log(`[Extrator] Public extraction failed: ${err.message}`)
+      return e.internalServerError('Não foi possível extrair dados suficientes da página pública.')
+    }
   }
 
-  const agentMessage = `Extract the property data from this URL: ${url}
-Page Content:
+  const agentMessage = `${extractionPrompt}Page Content:
 ${text || 'No page content could be retrieved. Please try to deduce any info from the URL.'}
 
 IMPORTANT: You MUST return ONLY a valid JSON object. Do NOT wrap it in markdown blocks (like \`\`\`json). Do NOT add any preamble or trailing text. If a value is missing or unknown, use null. All numeric fields should be numbers, not strings.
