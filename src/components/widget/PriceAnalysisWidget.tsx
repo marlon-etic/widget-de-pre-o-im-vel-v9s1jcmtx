@@ -200,8 +200,8 @@ export function PriceAnalysisWidget({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
 
-      <header className="p-6 pb-5 border-b border-slate-100 flex flex-col gap-3.5 bg-white relative z-20">
-        <div className="flex items-center justify-between">
+      <header className="p-6 pb-5 border-b border-slate-100 flex flex-col items-center gap-3.5 bg-white relative z-20 text-center">
+        <div className="flex items-center justify-between w-full">
           <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-0 font-bold tracking-wider px-2.5 py-0.5 text-[10px]">
             MARKET INSIGHTS
           </Badge>
@@ -300,12 +300,12 @@ export function PriceAnalysisWidget({
           aria-hidden={!isUnlocked}
         >
           {viewIndex === 1 && (
-            <div className="p-6">
+            <div className="p-6 flex flex-col items-center">
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
                 <MapPin className="text-slate-300" size={24} />
               </div>
               <h4 className="text-slate-900 font-bold mb-2">Estatísticas do Bairro</h4>
-              <p className="text-sm text-slate-500 leading-relaxed">
+              <p className="text-sm text-slate-500 leading-relaxed text-center">
                 As tendências de mercado para a região do Tatuapé estarão disponíveis em breve.
               </p>
             </div>
@@ -313,7 +313,7 @@ export function PriceAnalysisWidget({
         </div>
       </div>
 
-      <footer className="bg-slate-50 p-3.5 px-6 flex items-center justify-between border-t border-slate-100 relative z-20">
+      <footer className="bg-slate-50 p-3.5 px-6 flex items-center justify-center gap-4 border-t border-slate-100 relative z-20">
         <a
           href={whatsappHref}
           target="_blank"

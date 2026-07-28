@@ -57,8 +57,11 @@ export function PriceVisualizer({
         : 'border-t-red-600'
 
   return (
-    <section className="mb-6 relative" aria-label="Visualizador de faixa de preço">
-      <div className="relative mt-12 mb-6 px-1">
+    <section
+      className="mb-6 relative flex flex-col items-center"
+      aria-label="Visualizador de faixa de preço"
+    >
+      <div className="relative mt-12 mb-6 px-1 w-full">
         <div
           className="absolute -top-[42px] flex flex-col items-center transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-10"
           style={{ left: `${markerPos}%`, transform: 'translateX(-50%)' }}
@@ -104,7 +107,7 @@ export function PriceVisualizer({
         </div>
       </div>
 
-      <div className="flex justify-between items-center text-xs text-slate-600 mb-2 px-1">
+      <div className="flex justify-between items-center text-xs text-slate-600 mb-2 px-1 w-full">
         <div className="flex flex-col items-start">
           <span className="text-[10px] uppercase font-semibold text-slate-400">Menor Valor</span>
           <span className="font-bold text-slate-700">{formatCurrency(min)}</span>
@@ -115,7 +118,7 @@ export function PriceVisualizer({
         </div>
       </div>
 
-      <div className="text-center mt-2">
+      <div className="text-center mt-2 w-full flex flex-col items-center">
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <button

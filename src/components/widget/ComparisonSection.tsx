@@ -31,7 +31,7 @@ export function ComparisonSection({
     <section className="pt-0" aria-label="Custos e Insights de mercado">
       <div className="grid grid-cols-2 gap-3 mb-3">
         <Card className="bg-slate-50/80 border-slate-200/60 shadow-sm rounded-xl">
-          <CardContent className="p-3.5 flex flex-col items-center justify-center text-center">
+          <CardContent className="p-3.5 flex flex-col items-center justify-center text-center h-full">
             <Database size={16} className="text-blue-500 mb-1" />
             <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight mb-0.5">
               Registros usados
@@ -40,7 +40,7 @@ export function ComparisonSection({
           </CardContent>
         </Card>
         <Card className="bg-slate-50/80 border-slate-200/60 shadow-sm rounded-xl">
-          <CardContent className="p-3.5 flex flex-col items-center justify-center text-center">
+          <CardContent className="p-3.5 flex flex-col items-center justify-center text-center h-full">
             <Activity size={16} className="text-emerald-500 mb-1" />
             <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight mb-0.5">
               Liquidez
@@ -50,10 +50,10 @@ export function ComparisonSection({
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
         <Card className="bg-slate-50/80 border-slate-200/60 shadow-sm hover:shadow-md hover:border-slate-300 transition-all group overflow-hidden rounded-xl">
-          <CardContent className="p-4 flex flex-col h-full relative">
-            <div className="flex items-center gap-2 mb-3">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full relative">
+            <div className="flex flex-col items-center gap-2 mb-3">
               <div className="p-2 bg-white rounded-lg shadow-sm text-primary group-hover:scale-110 transition-transform duration-300">
                 <Building size={16} strokeWidth={2.5} />
               </div>
@@ -61,11 +61,11 @@ export function ComparisonSection({
                 Preço do condomínio
               </h4>
             </div>
-            <div className="mt-auto">
+            <div className="mt-auto flex flex-col items-center">
               <p className="text-xl font-extrabold text-slate-900 tracking-tight">
                 {condo > 0 ? formatCurrency(condo) : 'Não informado'}
               </p>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center justify-center gap-2 mt-1">
                 <Badge
                   variant="secondary"
                   className="text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
@@ -78,8 +78,8 @@ export function ComparisonSection({
         </Card>
 
         <Card className="bg-slate-50/80 border-slate-200/60 shadow-sm hover:shadow-md hover:border-slate-300 transition-all group overflow-hidden rounded-xl">
-          <CardContent className="p-4 flex flex-col h-full relative">
-            <div className="flex items-center gap-2 mb-3">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full relative">
+            <div className="flex flex-col items-center gap-2 mb-3">
               <div className="p-2 bg-white rounded-lg shadow-sm text-primary group-hover:scale-110 transition-transform duration-300">
                 <FileText size={16} strokeWidth={2.5} />
               </div>
@@ -87,11 +87,11 @@ export function ComparisonSection({
                 Preço do IPTU
               </h4>
             </div>
-            <div className="mt-auto">
+            <div className="mt-auto flex flex-col items-center">
               <p className="text-xl font-extrabold text-slate-900 tracking-tight">
                 {iptu > 0 ? formatCurrency(iptu) : 'Não informado'}
               </p>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center justify-center gap-2 mt-1">
                 <Badge
                   variant="secondary"
                   className="text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
