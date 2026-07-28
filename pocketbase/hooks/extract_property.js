@@ -76,8 +76,71 @@ routerAdd('POST', '/backend/v1/extract-property', (e) => {
     console.log(`[Extrator] HTTP fetch error for ${url}: ${err.message}`)
   }
 
-  const agentMessage = `Extract the property data from this URL: ${url}
+  const parseMoney = (value) => {
+    if (!value) return null
+    const normalized = String(value).replace(/\./g, '').replace(',', '.')
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
+  }
 
+  const firstNumber = (pattern) => {
+    const match = text.match(pattern)
+    return match ? Number(match[1].replace(',', '.')) : null
+  }
+
+  const priceMatch = text.match(/R\$\s*([\d.]+(?:,\d{1,2})?)/)
+  const condoMatch = text.match(/(?:Cond\.?|Condom[ií]nio)\s*R\$\s*([\d.]+(?:,\d{1,2})?)/i)
+  const iptuMatch = text.match(/IPTU\s*R\$\s*([\d.]+(?:,\d{1,2})?)/i)
+  const area =
+    firstNumber(/(\d+(?:[.,]\d+)?)\s*m²\s*(?:privativos?|[úu]teis?)/i) ||
+    firstNumber(/,\s*(\d+(?:[.,]\d+)?)\s*m²/i)
+  const rooms = firstNumber(/(\d+)\s+quartos?/i)
+  const suites = firstNumber(/(?:\(|e\s+)?(\d+)\s+su[ií]tes?/i)
+  const bathrooms =
+    firstNumber(/(\d+)\s+banheiros?/i) || (suites && /lavabo/i.test(text) ? suites + 1 : suites)
+  const parkingSpots = firstNumber(/(\d+)\s+vagas?/i)
+  const pathname = new URL(url).pathname
+  const slug = pathname.split('/').filter(Boolean).pop() || ''
+  const cityMarker = '-sao-paulo-'
+  const neighborhood = slug.includes(cityMarker)
+    ? slug
+        .slice(0, slug.indexOf(cityMarker))
+        .replace(
+          /^(?:casa-em-condominio|apartamento|casa|sobrado)-(?:a-venda|para-alugar)-\d+-quartos-/,
+          '',
+        )
+        .replace(/-/g, ' ')
+    : null
+  const type =
+    /apartamento/i.test(text) || slug.startsWith('apartamento')
+      ? 'apartamento'
+      : /casa em condom[ií]nio/i.test(text) || slug.startsWith('casa-em-condominio')
+        ? 'casa-em-condominio'
+        : null
+  const parsedProperty = {
+    preco_imovel: priceMatch ? parseMoney(priceMatch[1]) : null,
+    area,
+    quartos: rooms,
+    suites,
+    banheiros: bathrooms,
+    vagas: parkingSpots,
+    condominio_atual: condoMatch ? parseMoney(condoMatch[1]) : null,
+    iptu_atual: iptuMatch ? parseMoney(iptuMatch[1]) : null,
+    tipo: type,
+    bairro: neighborhood,
+    cidade: /s[aã]o\s+paulo/i.test(text) || slug.includes('-sao-paulo-') ? 'sao-paulo' : null,
+    estado: 'sp',
+  }
+
+  if (parsedProperty.preco_imovel && parsedProperty.area && parsedProperty.quartos) {
+    return e.json(200, parsedProperty)
+  }
+
+  if (!e.auth?.id) {
+    return e.internalServerError('Não foi possível extrair dados suficientes da página pública.')
+  }
+
+  const agentMessage = `Extract the property data from this URL: ${url}
 Page Content:
 ${text || 'No page content could be retrieved. Please try to deduce any info from the URL.'}
 
