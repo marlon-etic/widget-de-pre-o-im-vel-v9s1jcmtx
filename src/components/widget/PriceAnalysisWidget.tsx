@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, MapPin, Lock, AlertCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin, Lock, AlertCircle, MessageCircle } from 'lucide-react'
 import { PriceVisualizer } from './PriceVisualizer'
 import { ComparisonSection } from './ComparisonSection'
 import { cn } from '@/lib/utils'
@@ -24,6 +24,7 @@ export interface PriceAnalysisWidgetProps {
   condo?: number
   iptu?: number
   url?: string
+  whatsappNumber?: string
 }
 
 const sanitizeForLookup = (str: string) =>
@@ -74,6 +75,7 @@ export function PriceAnalysisWidget({
   condo,
   iptu,
   url,
+  whatsappNumber = '5511970932722',
 }: PriceAnalysisWidgetProps) {
   const [viewIndex, setViewIndex] = useState(0)
   const { user, isAuthenticated } = useAuth()
@@ -166,8 +168,11 @@ export function PriceAnalysisWidget({
   ])
 
   const d = analysisData
-  const condoAvg = d ? d.unit_price * area * 0.001 : 0
-  const iptuAvg = d ? d.unit_price * area * 0.0001 : 0
+  const condoAvg = 0
+  const iptuAvg = 0
+  const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    `Olá! Gostaria de falar com um especialista sobre este imóvel: ${url || window.location.href}`,
+  )}`
 
   const propertyData = {
     location: `${formatDisplay(city)}, ${formatDisplay(neighborhood)}`,
@@ -265,6 +270,8 @@ export function PriceAnalysisWidget({
                     q1={d.price_q1}
                     q3={d.price_q3}
                     currentPrice={propertyData.currentPrice}
+                    recordsTotal={d.records_total}
+                    activeWeeks={d.active_weeks}
                   />
                   <ComparisonSection
                     condo={condo || 0}
@@ -306,37 +313,49 @@ export function PriceAnalysisWidget({
         </div>
       </div>
 
-      <footer className="bg-slate-50 p-3.5 px-6 flex justify-end items-center border-t border-slate-100 space-x-2 relative z-20">
-        <Button
-          variant="outline"
-          size="icon"
-          className={cn(
-            'h-8 w-8 rounded-full border-slate-200 text-slate-500 transition-all',
-            viewIndex === 0
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:text-slate-900 hover:border-slate-300 hover:bg-white shadow-sm',
-          )}
-          onClick={() => setViewIndex(0)}
-          disabled={viewIndex === 0}
-          aria-label="Página anterior"
+      <footer className="bg-slate-50 p-3.5 px-6 flex items-center justify-between border-t border-slate-100 relative z-20">
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
+          aria-label="Falar com um especialista pelo WhatsApp"
         >
-          <ChevronLeft size={16} />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className={cn(
-            'h-8 w-8 rounded-full border-slate-200 text-slate-500 transition-all',
-            viewIndex === 1
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:text-slate-900 hover:border-slate-300 hover:bg-white shadow-sm',
-          )}
-          onClick={() => setViewIndex(1)}
-          disabled={viewIndex === 1}
-          aria-label="Próxima página"
-        >
-          <ChevronRight size={16} />
-        </Button>
+          <MessageCircle size={15} />
+          Fale com um especialista
+        </a>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              'h-8 w-8 rounded-full border-slate-200 text-slate-500 transition-all',
+              viewIndex === 0
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:text-slate-900 hover:border-slate-300 hover:bg-white shadow-sm',
+            )}
+            onClick={() => setViewIndex(0)}
+            disabled={viewIndex === 0}
+            aria-label="Página anterior"
+          >
+            <ChevronLeft size={16} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              'h-8 w-8 rounded-full border-slate-200 text-slate-500 transition-all',
+              viewIndex === 1
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:text-slate-900 hover:border-slate-300 hover:bg-white shadow-sm',
+            )}
+            onClick={() => setViewIndex(1)}
+            disabled={viewIndex === 1}
+            aria-label="Próxima página"
+          >
+            <ChevronRight size={16} />
+          </Button>
+        </div>
       </footer>
     </article>
   )

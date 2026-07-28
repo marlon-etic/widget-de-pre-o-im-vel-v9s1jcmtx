@@ -11,3 +11,11 @@ export const fetchNivuAnalysis = async (payload: any) => {
     headers: { 'Content-Type': 'application/json' },
   })
 }
+
+export const extractProperty = async (url: string) => {
+  return pb.send('/backend/v1/extract-property', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}

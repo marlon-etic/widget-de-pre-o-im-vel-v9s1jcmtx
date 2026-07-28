@@ -159,9 +159,16 @@ export default function Index() {
                   currentPrice,
                 )}
               </h2>
-              <Button className="w-full h-12 text-md font-bold rounded-xl shadow-md">
+              <a
+                href={`https://wa.me/5511970932722?text=${encodeURIComponent(
+                  `Olá! Gostaria de falar com um especialista sobre este imóvel: ${url_imovel}`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full h-12 inline-flex items-center justify-center text-md font-bold rounded-xl shadow-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
                 Falar com o corretor
-              </Button>
+              </a>
             </div>
 
             {/* The Target Component */}

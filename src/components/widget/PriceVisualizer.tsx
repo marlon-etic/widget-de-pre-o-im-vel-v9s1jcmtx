@@ -9,10 +9,21 @@ interface PriceVisualizerProps {
   q1: number
   q3: number
   currentPrice: number
+  recordsTotal?: number
+  activeWeeks?: number
 }
 
-export function PriceVisualizer({ min, max, q1, q3, currentPrice }: PriceVisualizerProps) {
+export function PriceVisualizer({
+  min,
+  max,
+  q1,
+  q3,
+  currentPrice,
+  recordsTotal,
+  activeWeeks,
+}: PriceVisualizerProps) {
   const [markerPos, setMarkerPos] = useState(0)
+  const [showMethodology, setShowMethodology] = useState(false)
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -23,9 +34,11 @@ export function PriceVisualizer({ min, max, q1, q3, currentPrice }: PriceVisuali
   }
 
   const range = max - min
-  const q1Pct = Math.max(0, Math.min(100, ((q1 - min) / range) * 100))
-  const q3Pct = Math.max(0, Math.min(100, ((q3 - min) / range) * 100))
-  const currentPct = ((currentPrice - min) / range) * 100
+  const safeRange = range > 0 ? range : Math.max(Math.abs(currentPrice) * 0.1, 1)
+  const visualMin = range > 0 ? min : min - safeRange / 2
+  const q1Pct = Math.max(0, Math.min(100, ((q1 - visualMin) / safeRange) * 100))
+  const q3Pct = Math.max(0, Math.min(100, ((q3 - visualMin) / safeRange) * 100))
+  const currentPct = ((currentPrice - visualMin) / safeRange) * 100
 
   useEffect(() => {
     const safePos = Math.max(2, Math.min(98, currentPct))
@@ -110,7 +123,7 @@ export function PriceVisualizer({ min, max, q1, q3, currentPrice }: PriceVisuali
               type="button"
             >
               <Info size={14} className="mr-1.5" />
-              Saiba como estimamos os valores
+              {showMethodology ? 'Ocultar base de cálculo' : 'Saiba como estimamos os valores'}
             </button>
           </TooltipTrigger>
           <TooltipContent
@@ -123,6 +136,20 @@ export function PriceVisualizer({ min, max, q1, q3, currentPrice }: PriceVisuali
             </p>
           </TooltipContent>
         </Tooltip>
+        {showMethodology && (
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left text-xs leading-relaxed text-slate-600">
+            <p className="font-bold text-slate-800 mb-1">Base de cálculo da NIVU</p>
+            <p>
+              A API calcula a faixa usando os quartis dos imóveis comparáveis: Q1 ={' '}
+              {formatCurrency(q1)}, Q3 = {formatCurrency(q3)}. O intervalo exibido vai de{' '}
+              {formatCurrency(min)} a {formatCurrency(max)}.
+            </p>
+            <p className="mt-1">
+              Amostra utilizada: {recordsTotal ?? 'não informado'} registro(s)
+              {activeWeeks ? ` · ${activeWeeks} semana(s) ativos` : ''}.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   )

@@ -70,7 +70,7 @@ export function ComparisonSection({
                   variant="secondary"
                   className="text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
                 >
-                  Média: {condoAvg ? formatCurrency(condoAvg) : 'R$ 800'}
+                  {condoAvg ? `Média: ${formatCurrency(condoAvg)}` : 'Média não informada pela API'}
                 </Badge>
               </div>
             </div>
@@ -96,7 +96,7 @@ export function ComparisonSection({
                   variant="secondary"
                   className="text-[10px] bg-slate-200/50 text-slate-600 border-0 font-semibold px-2 py-0"
                 >
-                  Média: {iptuAvg ? formatCurrency(iptuAvg) : 'R$ 100'}
+                  {iptuAvg ? `Média: ${formatCurrency(iptuAvg)}` : 'Média não informada pela API'}
                 </Badge>
               </div>
             </div>
