@@ -121,6 +121,7 @@ export function PriceVisualizer({
             <button
               className="text-xs text-primary hover:text-primary/80 hover:underline inline-flex items-center transition-colors font-medium cursor-help"
               type="button"
+              onClick={() => setShowMethodology((value) => !value)}
             >
               <Info size={14} className="mr-1.5" />
               {showMethodology ? 'Ocultar base de cálculo' : 'Saiba como estimamos os valores'}

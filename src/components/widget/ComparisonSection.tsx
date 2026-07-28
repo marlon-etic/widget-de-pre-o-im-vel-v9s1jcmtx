@@ -63,7 +63,7 @@ export function ComparisonSection({
             </div>
             <div className="mt-auto">
               <p className="text-xl font-extrabold text-slate-900 tracking-tight">
-                {formatCurrency(condo)}
+                {condo > 0 ? formatCurrency(condo) : 'Não informado'}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <Badge
@@ -89,7 +89,7 @@ export function ComparisonSection({
             </div>
             <div className="mt-auto">
               <p className="text-xl font-extrabold text-slate-900 tracking-tight">
-                {formatCurrency(iptu)}
+                {iptu > 0 ? formatCurrency(iptu) : 'Não informado'}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <Badge
